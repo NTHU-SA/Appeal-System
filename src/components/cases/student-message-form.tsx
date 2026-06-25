@@ -2,12 +2,11 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { HelpCircle, Send, Upload } from "lucide-react";
+import { HelpCircle, Send } from "lucide-react";
 
 import { addStudentMessage, type ActionState } from "@/lib/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -43,20 +42,9 @@ export function StudentMessageForm({ token }: { token: string }) {
           <Label htmlFor="body">補充內容</Label>
           <Textarea id="body" name="body" rows={5} required />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="attachments">補充附件</Label>
-          <div className="flex items-center gap-3 rounded-md border px-3 py-2">
-            <Upload className="h-4 w-4 text-muted-foreground" />
-            <Input
-              id="attachments"
-              name="attachments"
-              type="file"
-              multiple
-              className="border-0 p-0 shadow-none"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-            />
-          </div>
-        </div>
+        <p className="rounded-md border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
+          v1 補充資料頁僅支援文字。若需要追加附件，請回覆確認信或重新填寫 Google Form 並註明原案件編號。
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button
             type="button"

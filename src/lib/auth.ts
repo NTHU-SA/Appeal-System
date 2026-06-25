@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { getMinisterEmails, isConfiguredMinister } from "@/lib/env";
-import { createClient } from "@/lib/supabase/server";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { auth } from "@/auth";
+import { callGas } from "@/lib/gas";
 import type { UserRole } from "@/lib/types";
+import { staffRoleFromMemberRole } from "@/lib/workflow";
 
 export type StaffSession = {
   id: string;
@@ -12,33 +12,16 @@ export type StaffSession = {
 };
 
 export async function getCurrentStaff(): Promise<StaffSession | null> {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const claims = claimsData?.claims;
+  const session = await auth();
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) return null;
 
-  const subject = claims?.sub;
-  const email = String(claims?.email || "").toLowerCase();
-  if (!subject || !email) return null;
-
-  const admin = getSupabaseAdmin();
-
-  if (isConfiguredMinister(email)) {
-    const { data } = await admin
-      .from("profiles")
-      .upsert({ email, role: "minister" }, { onConflict: "email" })
-      .select("id, role")
-      .single();
-    return { id: data?.id || subject, email, role: "minister" };
-  }
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("id, role")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (profile?.role === "minister" || profile?.role === "member") {
-    return { id: profile.id, email, role: profile.role };
+  const data = await callGas<{ role: UserRole | null }>("getMemberRole", {
+    email,
+  });
+  const role = staffRoleFromMemberRole(data.role);
+  if (role) {
+    return { id: email, email, role };
   }
 
   return null;
@@ -57,8 +40,5 @@ export async function requireMinister() {
 }
 
 export function ministerSetupHint() {
-  const emails = [...getMinisterEmails()];
-  return emails.length
-    ? `已設定部長白名單：${emails.join(", ")}`
-    : "請在 Vercel 或 .env.local 設定 MINISTER_EMAILS。";
+  return "請在 Google Sheet 的 Members 工作表加入 minister 角色。";
 }

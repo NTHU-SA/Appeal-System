@@ -12,6 +12,10 @@ export function canWorkCase(role: UserRole | null) {
   return role === "minister" || role === "member";
 }
 
+export function staffRoleFromMemberRole(role: UserRole | null | undefined) {
+  return role === "minister" || role === "member" ? role : null;
+}
+
 export function nextStatusForReview(decision: ReviewDecision): CaseStatus {
   return decision === "accepted" ? "in_progress" : "rejected";
 }

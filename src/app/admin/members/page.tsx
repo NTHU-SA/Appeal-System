@@ -2,7 +2,7 @@ import { Trash2 } from "lucide-react";
 
 import { requireMinister } from "@/lib/auth";
 import { removeMember, upsertMember } from "@/lib/actions";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getMembers } from "@/lib/data";
 import { roleLabels } from "@/lib/types";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -27,12 +27,7 @@ import {
 
 export default async function MembersPage() {
   const staff = await requireMinister();
-  const admin = getSupabaseAdmin();
-  const { data: members } = await admin
-    .from("profiles")
-    .select("*")
-    .in("role", ["member", "minister"])
-    .order("created_at", { ascending: false });
+  const members = await getMembers();
 
   return (
     <AppShell staff={staff}>
@@ -79,7 +74,7 @@ export default async function MembersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(members || []).map((member) => (
+                  {members.map((member) => (
                     <TableRow key={member.id || member.email}>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>{roleLabels[member.role as "minister" | "member"]}</TableCell>
@@ -95,7 +90,7 @@ export default async function MembersPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!members?.length ? (
+                  {!members.length ? (
                     <TableRow>
                       <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                         尚未建立成員

@@ -1,4 +1,5 @@
 import { approveReview } from "@/lib/actions";
+import type { ReviewRequest } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,13 +8,7 @@ export function ReviewCard({
   review,
   canApprove,
 }: {
-  review: {
-    id: string;
-    decision: string;
-    status: string;
-    body_html: string;
-    created_at: string;
-  };
+  review: ReviewRequest;
   canApprove: boolean;
 }) {
   return (

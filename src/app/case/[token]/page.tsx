@@ -90,7 +90,9 @@ export default async function CaseStatusPage({
                 {attachments.map((attachment) => (
                   <a
                     key={attachment.id}
-                    href={attachment.signedUrl || "#"}
+                    href={attachment.drive_url || "#"}
+                    target="_blank"
+                    rel="noreferrer"
                     className="flex items-center gap-2 rounded-md border p-3 text-sm hover:bg-muted"
                   >
                     <FileText className="h-4 w-4 text-muted-foreground" />

@@ -7,7 +7,9 @@ import {
   emailIdempotencyKey,
   nextStatusForReview,
   shouldAutoCloseCase,
+  staffRoleFromMemberRole,
 } from "@/lib/workflow";
+import { createCaseToken, createPublicCaseId, hashCaseToken } from "@/lib/token";
 
 describe("workflow permissions", () => {
   it("allows only ministers to manage members and approve reviews", () => {
@@ -22,6 +24,13 @@ describe("workflow permissions", () => {
     expect(canWorkCase("member")).toBe(true);
     expect(canWorkCase("user")).toBe(false);
     expect(canWorkCase(null)).toBe(false);
+  });
+
+  it("maps sheet roles to staff roles", () => {
+    expect(staffRoleFromMemberRole("minister")).toBe("minister");
+    expect(staffRoleFromMemberRole("member")).toBe("member");
+    expect(staffRoleFromMemberRole("user")).toBeNull();
+    expect(staffRoleFromMemberRole(null)).toBeNull();
   });
 });
 
@@ -74,5 +83,18 @@ describe("email idempotency", () => {
     expect(emailIdempotencyKey("case-created", "CV-1")).toBe(
       emailIdempotencyKey("case-created", "CV-1")
     );
+  });
+});
+
+describe("case identifiers", () => {
+  it("creates opaque tokens and deterministic token hashes", () => {
+    const token = createCaseToken();
+    expect(token.length).toBeGreaterThanOrEqual(32);
+    expect(hashCaseToken(token)).toBe(hashCaseToken(token));
+    expect(hashCaseToken(token)).not.toBe(token);
+  });
+
+  it("creates public case ids with the expected prefix", () => {
+    expect(createPublicCaseId()).toMatch(/^CV-\d{8}-[A-F0-9]{8}$/);
   });
 });
