@@ -32,7 +32,7 @@ Copy `.env.example` to `.env.local` and fill in:
 
 ## Database
 
-Apply the migration in `supabase/migrations/20260622000000_initial_schema.sql`.
+Apply the migration in `supabase/migrations/20260622090049_initial_schema.sql`.
 
 It creates the case tables, RLS policies, explicit Data API grants, and the private `case-attachments` Storage bucket.
 

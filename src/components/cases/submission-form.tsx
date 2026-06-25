@@ -143,9 +143,6 @@ export function SubmissionForm() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs leading-5 text-muted-foreground">
-          送出後系統會寄出案件內容與專屬查詢連結。請保存該連結以查看最新狀態。
-        </p>
         <SubmitButton />
       </div>
     </form>
