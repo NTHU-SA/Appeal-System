@@ -1,3 +1,73 @@
+function createCaseFromSubmission_(input) {
+  validatePublicCaseInput_(input);
+  const ss = getSpreadsheet_();
+  const rootFolder = getDriveFolder_();
+  const now = nowIso_();
+  const publicId = createPublicCaseId_();
+  const token = createToken_();
+  const caseId = Utilities.getUuid();
+  const messageId = Utilities.getUuid();
+  const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
+  const studentEmail = String(input.email).trim().toLowerCase();
+
+  const caseRow = {
+    id: caseId,
+    public_id: publicId,
+    token_hash: sha256Hex_(token),
+    token_revoked_at: "",
+    status: "pending",
+    student_email: studentEmail,
+    student_department: String(input.department || "").trim(),
+    student_name: String(input.name || "").trim(),
+    category: String(input.category || "").trim(),
+    subject: String(input.subject || "").trim(),
+    desired_outcome: String(input.desiredOutcome || "").trim(),
+    assigned_to: "",
+    assigned_to_email: "",
+    created_at: now,
+    updated_at: now,
+    last_student_message_at: now,
+    last_staff_message_at: "",
+    closed_at: "",
+  };
+
+  appendObject_(ss, "Cases", caseRow);
+  appendObject_(ss, "Messages", {
+    id: messageId,
+    case_id: caseId,
+    author_id: "",
+    author_email: studentEmail,
+    author_type: "student",
+    body_text: caseRow.subject,
+    body_html: "",
+    created_at: now,
+  });
+
+  (input.files || []).forEach((fileInput) => {
+    const bytes = Utilities.base64Decode(fileInput.data);
+    if (bytes.length > 8 * 1024 * 1024) throw new Error(`${fileInput.name} 超過 8MB 限制。`);
+    if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
+    const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
+    const file = caseFolder.createFile(blob);
+    appendObject_(ss, "Attachments", {
+      id: Utilities.getUuid(),
+      case_id: caseId,
+      message_id: messageId,
+      drive_file_id: file.getId(),
+      drive_url: file.getUrl(),
+      file_name: file.getName(),
+      file_type: file.getMimeType(),
+      file_size: bytes.length,
+      uploaded_by_type: "student",
+      created_at: now,
+    });
+  });
+
+  sendCaseEmail_(caseRow, token, "我們已收到您的申訴");
+  notifyStaff_(ss, `新申訴案件 ${publicId}`, `${caseRow.student_name}（${caseRow.student_department}）送出 ${caseRow.category}`);
+  return { publicId, caseId };
+}
+
 function listCases_(ss, payload) {
   const days = Number(payload.days || 30);
   const query = String(payload.query || "").trim().toLowerCase();

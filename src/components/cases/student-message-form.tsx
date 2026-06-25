@@ -43,7 +43,7 @@ export function StudentMessageForm({ token }: { token: string }) {
           <Textarea id="body" name="body" rows={5} required />
         </div>
         <p className="rounded-md border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
-          v1 補充資料頁僅支援文字。若需要追加附件，請回覆確認信或重新填寫 Google Form 並註明原案件編號。
+          v1 補充資料頁僅支援文字。若需要追加附件，請回覆確認信或重新填寫申訴表單並註明原案件編號。
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button

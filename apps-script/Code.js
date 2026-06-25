@@ -77,8 +77,6 @@ function setupCampusVoice() {
   Object.keys(TAB_HEADERS).forEach((name) => ensureSheet_(ss, name, TAB_HEADERS[name]));
 
   const rootFolder = getOrCreateDriveFolder_(props);
-  const form = getOrCreateForm_(props, ss);
-  installFormTrigger_(form);
   installAutoCloseTrigger_();
 
   const deployerEmail = Session.getActiveUser().getEmail();
@@ -91,8 +89,6 @@ function setupCampusVoice() {
     {
       SHEET_ID: ss.getId(),
       DRIVE_FOLDER_ID: rootFolder.getId(),
-      FORM_ID: form.getId(),
-      FORM_URL: form.getPublishedUrl(),
       SHARED_SECRET: sharedSecret,
     },
     true,
@@ -100,88 +96,26 @@ function setupCampusVoice() {
   writeSettings_(ss, {
     SHEET_ID: ss.getId(),
     DRIVE_FOLDER_ID: rootFolder.getId(),
-    FORM_ID: form.getId(),
-    FORM_URL: form.getPublishedUrl(),
     SHARED_SECRET: sharedSecret,
   });
 
   console.log(`Sheet: ${ss.getUrl()}`);
-  console.log(`Form: ${form.getPublishedUrl()}`);
   console.log(`Drive folder: ${rootFolder.getUrl()}`);
   console.log(`Shared secret: ${sharedSecret}`);
+  console.log("Deploy this script as a web app, then use the /exec URL as NEXT_PUBLIC_CASE_FORM_URL and GOOGLE_APPS_SCRIPT_WEB_APP_URL.");
 }
 
-function onFormSubmit(e) {
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile("Index")
+    .setTitle("清華大學學生申訴表單")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function submitPublicCase(input) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
-    const ss = getSpreadsheet_();
-    const rootFolder = getDriveFolder_();
-    const itemMap = formResponseMap_(e.response);
-    const now = nowIso_();
-    const publicId = createPublicCaseId_();
-    const token = createToken_();
-    const caseId = Utilities.getUuid();
-    const messageId = Utilities.getUuid();
-
-    const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
-    const studentEmail =
-      String(itemMap["電子郵件"] || e.response.getRespondentEmail() || "").trim().toLowerCase();
-    if (!studentEmail) throw new Error("Missing student email.");
-
-    const caseRow = {
-      id: caseId,
-      public_id: publicId,
-      token_hash: sha256Hex_(token),
-      token_revoked_at: "",
-      status: "pending",
-      student_email: studentEmail,
-      student_department: itemMap["系級"] || "",
-      student_name: itemMap["姓名"] || "",
-      category: itemMap["申訴種類"] || "",
-      subject: itemMap["申訴問題"] || "",
-      desired_outcome: itemMap["希望得到的處理方式"] || "",
-      assigned_to: "",
-      assigned_to_email: "",
-      created_at: now,
-      updated_at: now,
-      last_student_message_at: now,
-      last_staff_message_at: "",
-      closed_at: "",
-    };
-
-    appendObject_(ss, "Cases", caseRow);
-    appendObject_(ss, "Messages", {
-      id: messageId,
-      case_id: caseId,
-      author_id: "",
-      author_email: studentEmail,
-      author_type: "student",
-      body_text: caseRow.subject,
-      body_html: "",
-      created_at: now,
-    });
-
-    const fileIds = fileUploadIds_(e.response);
-    fileIds.forEach((fileId) => {
-      const file = DriveApp.getFileById(fileId);
-      file.moveTo(caseFolder);
-      appendObject_(ss, "Attachments", {
-        id: Utilities.getUuid(),
-        case_id: caseId,
-        message_id: messageId,
-        drive_file_id: file.getId(),
-        drive_url: file.getUrl(),
-        file_name: file.getName(),
-        file_type: file.getMimeType(),
-        file_size: file.getSize(),
-        uploaded_by_type: "student",
-        created_at: now,
-      });
-    });
-
-    sendCaseEmail_(caseRow, token, "我們已收到您的申訴");
-    notifyStaff_(ss, `新申訴案件 ${publicId}`, `${caseRow.student_name}（${caseRow.student_department}）送出 ${caseRow.category}`);
+    return createCaseFromSubmission_(input);
   } finally {
     lock.releaseLock();
   }

@@ -1,12 +1,12 @@
 # 清華大學學生申訴協力系統
 
-Next.js + Google Apps Script + Google Forms/Sheets/Drive/Gmail 的學生申訴送件與學權組織協作系統。
+Next.js + Google Apps Script Web App + Google Sheets/Drive/Gmail 的學生申訴送件與學權組織協作系統。
 
 ## Stack
 
 - Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui
 - Auth.js Google OAuth for staff login
-- Google Forms for public case intake
+- Apps Script Web App for public case intake
 - Google Sheets for case data, members, drafts, reviews, and audit logs
 - Google Drive for uploaded attachments
 - Gmail/MailApp from Google Apps Script for notifications
@@ -24,7 +24,7 @@ pnpm dev
 Copy `.env.example` to `.env.local` and fill in:
 
 - `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_GOOGLE_FORM_URL`
+- `NEXT_PUBLIC_CASE_FORM_URL`
 - `GOOGLE_APPS_SCRIPT_WEB_APP_URL`
 - `GOOGLE_APPS_SCRIPT_SHARED_SECRET`
 - `AUTH_SECRET`
@@ -45,15 +45,13 @@ pnpm gas:push
 
 4. In Apps Script, set script property `APP_URL` to the deployed Next.js URL.
 5. Run `setupCampusVoice()` once and authorize the script.
-6. Copy the logged `FORM_URL` to `NEXT_PUBLIC_GOOGLE_FORM_URL`.
-7. Copy the logged `SHARED_SECRET` to `GOOGLE_APPS_SCRIPT_SHARED_SECRET`.
-8. Deploy the script as a web app and copy the `/exec` URL to `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
+6. Deploy the script as a web app.
+7. Copy the `/exec` URL to both `NEXT_PUBLIC_CASE_FORM_URL` and `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
+8. Copy the logged `SHARED_SECRET` to `GOOGLE_APPS_SCRIPT_SHARED_SECRET`.
 
-### Google Form Attachment Setup
+### Public Form
 
-`setupCampusVoice()` creates the base form, Sheet tabs, Drive folder, form submit trigger, and daily auto-close trigger.
-
-Google Forms file-upload items must be added manually in the form editor. Add a required file-upload question for attachments. Respondents must sign in to Google to upload files.
+The public form is rendered by `apps-script/Index.html` through Apps Script `doGet()`. It supports PDF, Word, PNG, and JPG uploads up to 8MB each, then stores files in the generated Drive folder.
 
 ## Staff Access
 

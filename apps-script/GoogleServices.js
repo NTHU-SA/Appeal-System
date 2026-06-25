@@ -17,41 +17,6 @@ function getOrCreateSubFolder_(parent, name) {
   return folders.hasNext() ? folders.next() : parent.createFolder(name);
 }
 
-function getOrCreateForm_(props, ss) {
-  const id = props.getProperty("FORM_ID");
-  if (id) return FormApp.openById(id);
-
-  const form = FormApp.create("清華大學學生申訴表單");
-  form.setDescription("送出後會收到案件編號與查詢連結。附件上傳題需由管理者在表單 UI 手動新增。");
-  form.setCollectEmail(false);
-  form.addTextItem().setTitle("電子郵件").setRequired(true);
-  form.addTextItem().setTitle("系級").setRequired(true);
-  form.addTextItem().setTitle("姓名").setRequired(true);
-  form
-    .addListItem()
-    .setTitle("申訴種類")
-    .setChoiceValues(["課務與教學", "宿舍與生活", "行政程序", "校園安全", "其他"])
-    .setRequired(true);
-  form.addParagraphTextItem().setTitle("申訴問題").setRequired(true);
-  form.addParagraphTextItem().setTitle("希望得到的處理方式").setRequired(true);
-  form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
-  props.setProperty("FORM_ID", form.getId());
-  return form;
-}
-
-function installFormTrigger_(form) {
-  const props = PropertiesService.getScriptProperties();
-  const existingId = props.getProperty("FORM_TRIGGER_ID");
-  const triggers = ScriptApp.getProjectTriggers();
-  if (existingId && triggers.some((trigger) => trigger.getUniqueId() === existingId)) return;
-  const triggerId = ScriptApp.newTrigger("onFormSubmit")
-    .forForm(form)
-    .onFormSubmit()
-    .create()
-    .getUniqueId();
-  props.setProperty("FORM_TRIGGER_ID", triggerId);
-}
-
 function installAutoCloseTrigger_() {
   const props = PropertiesService.getScriptProperties();
   const existingId = props.getProperty("AUTO_CLOSE_TRIGGER_ID");

@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <base target="_top" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f3ee;
+        --surface: #fffdfa;
+        --ink: #20201d;
+        --muted: #6f6a61;
+        --line: #ded8cf;
+        --primary: #37645a;
+        --primary-strong: #21483f;
+        --accent: #b45f4d;
+        --good: #2d6b4f;
+        --bad: #a13737;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(135deg, rgba(55, 100, 90, 0.11), transparent 32rem),
+          linear-gradient(315deg, rgba(180, 95, 77, 0.14), transparent 28rem),
+          var(--bg);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(1080px, 100%);
+        margin: 0 auto;
+        padding: 32px 18px;
+      }
+
+      .shell {
+        display: grid;
+        gap: 24px;
+        align-items: start;
+      }
+
+      @media (min-width: 920px) {
+        .shell {
+          grid-template-columns: 0.78fr 1.22fr;
+        }
+      }
+
+      .intro {
+        padding: 10px 0;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 253, 250, 0.68);
+        padding: 7px 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      h1 {
+        margin: 20px 0 14px;
+        font-size: clamp(32px, 6vw, 58px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 34rem;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.8;
+      }
+
+      .form-panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 253, 250, 0.94);
+        box-shadow: 0 20px 70px rgba(61, 55, 48, 0.13);
+        overflow: hidden;
+      }
+
+      .panel-head {
+        border-bottom: 1px solid var(--line);
+        padding: 22px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      .panel-head p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 14px;
+      }
+
+      form {
+        display: grid;
+        gap: 18px;
+        padding: 22px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      @media (min-width: 640px) {
+        .grid.two {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 450;
+        padding: 12px 13px;
+        outline: none;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      textarea {
+        min-height: 136px;
+        resize: vertical;
+        line-height: 1.65;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(55, 100, 90, 0.16);
+      }
+
+      .hint {
+        margin: -3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .file-box {
+        border: 1px dashed #c9bfb1;
+        border-radius: 8px;
+        background: #fbf7f1;
+        padding: 14px;
+      }
+
+      .file-list {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      @media (min-width: 560px) {
+        .actions {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+
+      button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--primary);
+        color: white;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 720;
+        padding: 0 20px;
+        transition:
+          background 160ms ease,
+          transform 160ms ease;
+      }
+
+      button:hover {
+        background: var(--primary-strong);
+      }
+
+      button:disabled {
+        cursor: wait;
+        opacity: 0.72;
+      }
+
+      .notice {
+        display: none;
+        border-radius: 8px;
+        padding: 13px 14px;
+        line-height: 1.7;
+        font-size: 14px;
+      }
+
+      .notice.show {
+        display: block;
+      }
+
+      .notice.error {
+        border: 1px solid rgba(161, 55, 55, 0.25);
+        background: rgba(161, 55, 55, 0.08);
+        color: var(--bad);
+      }
+
+      .notice.success {
+        border: 1px solid rgba(45, 107, 79, 0.24);
+        background: rgba(45, 107, 79, 0.08);
+        color: var(--good);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="shell">
+        <section class="intro">
+          <div class="eyebrow">清華大學學生會 · 學權協力</div>
+          <h1>學生申訴送件</h1>
+          <p class="lead">
+            請描述你遇到的狀況、期待協助方式與可佐證的資料。送出後，系統會寄出案件編號與專屬查詢連結。
+          </p>
+        </section>
+
+        <section class="form-panel">
+          <div class="panel-head">
+            <h2>申訴表單</h2>
+            <p>附件會安全存入學權組織的 Google Drive。請確認 email 正確，案件連結會寄到該信箱。</p>
+          </div>
+
+          <form id="caseForm">
+            <div id="notice" class="notice"></div>
+
+            <div class="grid two">
+              <label>
+                電子郵件
+                <input name="email" type="email" autocomplete="email" required />
+              </label>
+              <label>
+                系級
+                <input name="department" autocomplete="organization-title" required />
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                姓名
+                <input name="name" autocomplete="name" required />
+              </label>
+              <label>
+                申訴種類
+                <select name="category" required>
+                  <option value="">請選擇</option>
+                  <option>課務與教學</option>
+                  <option>宿舍與生活</option>
+                  <option>行政程序</option>
+                  <option>校園安全</option>
+                  <option>其他</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              申訴問題
+              <textarea name="subject" required minlength="8" placeholder="請描述事件、時間、相關單位與目前遇到的困難。"></textarea>
+            </label>
+
+            <label>
+              希望得到的處理方式
+              <textarea name="desiredOutcome" required placeholder="例如協助轉介、釐清規則、正式申訴、與單位溝通等。"></textarea>
+            </label>
+
+            <label class="file-box">
+              上傳檔案
+              <input id="attachments" name="attachments" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+              <p class="hint">支援 PDF、Word、PNG、JPG，可複選，每個檔案上限 8MB。</p>
+              <div id="fileList" class="file-list"></div>
+            </label>
+
+            <div class="actions">
+              <p class="hint">送出前請再次確認內容；送出後可用 email 中的案件連結補充文字資料。</p>
+              <button id="submitButton" type="submit">送出申訴</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const form = document.querySelector("#caseForm");
+      const notice = document.querySelector("#notice");
+      const submitButton = document.querySelector("#submitButton");
+      const attachments = document.querySelector("#attachments");
+      const fileList = document.querySelector("#fileList");
+      const maxFileBytes = 8 * 1024 * 1024;
+
+      attachments.addEventListener("change", () => {
+        fileList.innerHTML = "";
+        Array.from(attachments.files || []).forEach((file) => {
+          const item = document.createElement("div");
+          item.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+          fileList.appendChild(item);
+        });
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setNotice("", "");
+
+        const files = Array.from(attachments.files || []);
+        const oversize = files.find((file) => file.size > maxFileBytes);
+        if (oversize) {
+          setNotice(`${oversize.name} 超過 8MB 限制。`, "error");
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "送件中...";
+
+        try {
+          const data = new FormData(form);
+          const payload = {
+            email: data.get("email"),
+            department: data.get("department"),
+            name: data.get("name"),
+            category: data.get("category"),
+            subject: data.get("subject"),
+            desiredOutcome: data.get("desiredOutcome"),
+            files: await Promise.all(files.map(filePayload)),
+          };
+
+          google.script.run
+            .withSuccessHandler((result) => {
+              form.reset();
+              fileList.innerHTML = "";
+              setNotice(`案件已建立：${result.publicId}。請查看信箱取得查詢連結。`, "success");
+              submitButton.disabled = false;
+              submitButton.textContent = "送出申訴";
+            })
+            .withFailureHandler((error) => {
+              setNotice(error && error.message ? error.message : "送件失敗，請稍後再試。", "error");
+              submitButton.disabled = false;
+              submitButton.textContent = "送出申訴";
+            })
+            .submitPublicCase(payload);
+        } catch (error) {
+          setNotice(error.message || "檔案讀取失敗。", "error");
+          submitButton.disabled = false;
+          submitButton.textContent = "送出申訴";
+        }
+      });
+
+      function setNotice(message, type) {
+        notice.className = message ? `notice show ${type}` : "notice";
+        notice.textContent = message;
+      }
+
+      function filePayload(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error(`${file.name} 讀取失敗。`));
+          reader.onload = () => {
+            const base64 = String(reader.result).split(",")[1];
+            resolve({
+              name: file.name,
+              mimeType: file.type || "application/octet-stream",
+              data: base64,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    </script>
+  </body>
+</html>

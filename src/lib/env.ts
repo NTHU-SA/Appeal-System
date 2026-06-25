@@ -6,6 +6,6 @@ export function getAppUrl() {
   );
 }
 
-export function getGoogleFormUrl() {
-  return process.env.NEXT_PUBLIC_GOOGLE_FORM_URL || "";
+export function getCaseFormUrl() {
+  return process.env.NEXT_PUBLIC_CASE_FORM_URL || "";
 }

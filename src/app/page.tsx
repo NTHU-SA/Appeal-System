@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, FileText, ShieldCheck } from "lucide-react";
 
-import { getGoogleFormUrl } from "@/lib/env";
+import { getCaseFormUrl } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const formUrl = getGoogleFormUrl();
+  const formUrl = getCaseFormUrl();
 
   return (
     <main className="flex min-h-dvh flex-col">
@@ -27,7 +27,7 @@ export default function Home() {
           <div>
             <h2 className="text-xl font-semibold">申訴送件</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              送件改由 Google Form 收集，附件會存入學權組織的 Google Drive。若表單包含附件題，Google 會要求登入帳號。
+              送件表單由 Google Apps Script Web App 提供，附件會存入學權組織的 Google Drive。
             </p>
           </div>
 
@@ -43,13 +43,13 @@ export default function Home() {
               {formUrl ? (
                 <Button asChild className="w-full sm:w-auto">
                   <a href={formUrl || "#"} target="_blank" rel="noreferrer">
-                    前往 Google Form
+                    前往申訴表單
                     <ArrowRight className="h-4 w-4" />
                   </a>
                 </Button>
               ) : (
                 <p className="text-xs text-destructive">
-                  尚未設定 NEXT_PUBLIC_GOOGLE_FORM_URL。
+                  尚未設定 NEXT_PUBLIC_CASE_FORM_URL。
                 </p>
               )}
             </div>
