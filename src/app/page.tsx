@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowRight, FileText, ShieldCheck } from "lucide-react";
 
 import { getCaseFormUrl } from "@/lib/env";
@@ -63,23 +62,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-
-      <footer className="border-t bg-card/60">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="font-medium text-foreground">清華大學學生會</p>
-            <p className="mt-1">清華大學學生申訴協力系統</p>
-          </div>
-          <div className="flex flex-col gap-3 sm:items-end">
-            <Link
-              href="/login"
-              className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
-            >
-              學權後台登入
-            </Link>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }
