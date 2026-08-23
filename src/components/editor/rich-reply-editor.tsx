@@ -9,6 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Bold, Quote, Save, Send } from "lucide-react";
 
 import { saveDraftReply, submitReview } from "@/lib/actions";
+import { formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -69,7 +70,7 @@ export function RichReplyEditor({
       formData.set("json", JSON.stringify(editor.getJSON()));
       startTransition(async () => {
         await saveDraftReply(formData);
-        setSavedAt(new Date().toLocaleTimeString("zh-TW"));
+        setSavedAt(formatTime());
       });
     }, 1800);
     return () => window.clearInterval(interval);

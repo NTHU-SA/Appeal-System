@@ -3,6 +3,7 @@ import { FileText } from "lucide-react";
 
 import { getCaseByToken } from "@/lib/data";
 import { statusLabels } from "@/lib/types";
+import { formatDateTime } from "@/lib/utils";
 import { StudentMessageForm } from "@/components/cases/student-message-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +71,7 @@ export default async function CaseStatusPage({
             <div key={message.id} className="rounded-md border p-3">
               <div className="mb-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>{message.author_type === "student" ? "學生" : "學權組織"}</span>
-                <time>{new Date(message.created_at).toLocaleString("zh-TW")}</time>
+                <time>{formatDateTime(message.created_at)}</time>
               </div>
               {message.body_html ? (
                 <div

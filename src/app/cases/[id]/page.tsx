@@ -3,6 +3,7 @@ import { FileText } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { getAdminCase } from "@/lib/data";
 import { roleLabels, statusLabels } from "@/lib/types";
+import { formatDateTime } from "@/lib/utils";
 import { RichReplyEditor } from "@/components/editor/rich-reply-editor";
 import { AppShell } from "@/components/layout/app-shell";
 import { ReviewCard } from "@/components/cases/review-card";
@@ -79,7 +80,7 @@ export default async function AdminCasePage({
                         ? "學生"
                         : roleLabels[message.author_type as "member" | "minister"]}
                     </span>
-                    <time>{new Date(message.created_at).toLocaleString("zh-TW")}</time>
+                    <time>{formatDateTime(message.created_at)}</time>
                   </div>
                   {message.body_html ? (
                     <div

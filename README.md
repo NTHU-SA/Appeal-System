@@ -35,6 +35,8 @@ Copy `.env.example` to `.env.local` and fill in:
 
 The Apps Script source lives in `apps-script/` and is managed with clasp.
 
+完整部署操作請看 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)。
+
 1. Create or clone an Apps Script project.
 2. Copy `apps-script/.clasp.json.example` to `apps-script/.clasp.json` and set `scriptId`.
 3. Push the Apps Script source:

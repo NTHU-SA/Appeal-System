@@ -1,5 +1,6 @@
 import { approveReview } from "@/lib/actions";
 import type { ReviewRequest } from "@/lib/types";
+import { formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,7 +21,7 @@ export function ReviewCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          {new Date(review.created_at).toLocaleString("zh-TW")} · {review.status}
+          {formatDateTime(review.created_at)} · {review.status}
         </p>
         {canApprove && review.status === "pending" ? (
           <form action={approveReview} className="space-y-3">

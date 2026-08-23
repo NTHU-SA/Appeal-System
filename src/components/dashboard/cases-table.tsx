@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { statusLabels, type CaseRecord } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -49,7 +50,7 @@ export function CasesTable({ cases }: { cases: CaseRecord[] }) {
                 </Badge>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                {new Date(item.created_at).toLocaleDateString("zh-TW")}
+                {formatDate(item.created_at)}
               </TableCell>
             </TableRow>
           ))}
