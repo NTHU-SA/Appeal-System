@@ -23,7 +23,7 @@ export default function Home() {
               申訴協力系統
             </h1>
           </div>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+          <p className="max-w-2xl text-xs text-muted-foreground sm:text-base">
             填寫下方表單送出申訴，後續進度與回覆會寄到你的電子郵件。
           </p>
         </header>
