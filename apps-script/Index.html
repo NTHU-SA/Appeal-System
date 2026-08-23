@@ -4,6 +4,11 @@
     <base target="_top" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      if (window.self !== window.top) {
+        document.documentElement.classList.add("embedded");
+      }
+    </script>
     <style>
       :root {
         color-scheme: light;
@@ -44,6 +49,35 @@
         width: min(1080px, 100%);
         margin: 0 auto;
         padding: 32px 18px;
+      }
+
+      html.embedded body {
+        min-height: 0;
+        background: transparent;
+      }
+
+      html.embedded main {
+        width: 100%;
+        padding: 0;
+      }
+
+      html.embedded .shell {
+        display: block;
+      }
+
+      html.embedded .intro,
+      html.embedded .panel-head {
+        display: none;
+      }
+
+      html.embedded .form-panel {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      html.embedded form {
+        padding: 0;
       }
 
       .shell {
@@ -340,6 +374,24 @@
       const attachments = document.querySelector("#attachments");
       const fileList = document.querySelector("#fileList");
       const maxFileBytes = 8 * 1024 * 1024;
+
+      function reportFrameHeight() {
+        if (window.self === window.top) return;
+
+        window.parent.postMessage(
+          {
+            type: "campusvoice:form-height",
+            height: document.documentElement.scrollHeight,
+          },
+          "*",
+        );
+      }
+
+      if (window.self !== window.top) {
+        window.addEventListener("load", reportFrameHeight);
+        new ResizeObserver(reportFrameHeight).observe(document.documentElement);
+        requestAnimationFrame(reportFrameHeight);
+      }
 
       attachments.addEventListener("change", () => {
         fileList.innerHTML = "";
