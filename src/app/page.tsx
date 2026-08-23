@@ -1,5 +1,6 @@
 import { EmbeddedCaseForm } from "@/components/cases/embedded-case-form";
 import { getCaseFormUrl } from "@/lib/env";
+import Image from "next/image";
 
 export default function Home() {
   const formUrl = getCaseFormUrl();
@@ -8,6 +9,15 @@ export default function Home() {
     <main className="min-h-dvh">
       <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8 space-y-3 sm:mb-10">
+          <Image
+            src="/logo.png"
+            alt="國立清華大學學生會"
+            width={1503}
+            height={202}
+            sizes="(max-width: 640px) calc(100vw - 32px), 576px"
+            preload
+            className="h-auto w-full max-w-xl"
+          />
           <h1 className="text-3xl font-semibold tracking-normal text-balance sm:text-5xl">
             清華大學學生申訴協力系統
           </h1>
