@@ -63,7 +63,7 @@ function createCaseFromSubmission_(input) {
     });
   });
 
-  sendCaseEmail_(caseRow, token, "我們已收到您的申訴");
+  sendCaseEmail_(caseRow, token, `【清華大學學生會】申訴案件已受理：${publicId}`, null, ss);
   notifyStaff_(ss, `新申訴案件 ${publicId}`, `${caseRow.student_name}（${caseRow.student_department}）送出 ${caseRow.category}`);
   return { publicId, caseId };
 }
@@ -129,23 +129,73 @@ function addStudentMessage_(ss, payload) {
   const caseData = getCaseByToken_(ss, payload.token);
   if (!caseData) throw new Error("案件連結無效。");
   const now = nowIso_();
+  const caseId = caseData.case.id;
+  const publicId = caseData.case.public_id;
+  const messageId = Utilities.getUuid();
+
+  let bodyText = String(payload.body || "").trim();
+  const files = payload.files || [];
+
+  if (!bodyText && files.length === 0) {
+    throw new Error("請填寫補充說明或選取要上傳的檔案。");
+  }
+
+  if (files.length > 0) {
+    const rootFolder = getDriveFolder_();
+    const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
+    const uploadedNames = [];
+
+    files.forEach((fileInput) => {
+      const bytes = Utilities.base64Decode(fileInput.data);
+      if (bytes.length > 8 * 1024 * 1024) throw new Error(`${fileInput.name} 超過 8MB 限制。`);
+      if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
+      const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
+      const file = caseFolder.createFile(blob);
+      uploadedNames.push(file.getName());
+
+      appendObject_(ss, "Attachments", {
+        id: Utilities.getUuid(),
+        case_id: caseId,
+        message_id: messageId,
+        drive_file_id: file.getId(),
+        drive_url: file.getUrl(),
+        file_name: file.getName(),
+        file_type: file.getMimeType(),
+        file_size: bytes.length,
+        uploaded_by_type: "student",
+        created_at: now,
+      });
+    });
+
+    if (!bodyText) {
+      bodyText = `【學生補充附件】：${uploadedNames.join("、")}`;
+    }
+  }
+
   appendObject_(ss, "Messages", {
-    id: Utilities.getUuid(),
-    case_id: caseData.case.id,
+    id: messageId,
+    case_id: caseId,
     author_id: "",
     author_email: caseData.case.student_email,
     author_type: "student",
-    body_text: payload.body,
+    body_text: bodyText,
     body_html: "",
     created_at: now,
   });
-  const existing = findRow_(ss, "Cases", (row) => row.id === caseData.case.id);
+
+  const existing = findRow_(ss, "Cases", (row) => row.id === caseId);
   updateObject_(ss, "Cases", existing.rowNumber, {
     ...existing.object,
     updated_at: now,
     last_student_message_at: now,
   });
-  notifyStaff_(ss, `學生新增案件回覆 ${caseData.case.public_id}`, String(payload.body || "").slice(0, 180));
+
+  notifyStaff_(
+    ss,
+    `學生新增案件回覆與補件 ${publicId}`,
+    `${caseData.case.student_name || "學生"}（${caseData.case.student_department || ""}）新增補充資料：\n${bodyText}`.slice(0, 300)
+  );
+
   return { ok: true };
 }
 
@@ -238,7 +288,7 @@ function approveReview_(ss, payload) {
     body_html: payload.html,
     created_at: now,
   });
-  sendCaseEmail_(caseRow.object, "", `案件 ${caseRow.object.public_id} 有新的回覆`, payload.html);
+  sendCaseEmail_(caseRow.object, "", `【清華大學學生會】案件 ${caseRow.object.public_id} 有新的回覆`, payload.html, ss);
   return { caseId: caseRow.object.id };
 }
 
@@ -266,7 +316,7 @@ function closeStaleCases() {
       metadata: JSON.stringify({ staleDays: 14 }),
       created_at: closedAt,
     });
-    sendCaseEmail_(item, "", `案件 ${item.public_id} 已自動結案`, "學權組織回覆後已超過 14 天未收到您的補充回覆，系統已將案件設為已結案。");
+    sendCaseEmail_(item, "", `【清華大學學生會】案件 ${item.public_id} 已自動結案`, "學權組織回覆後已超過 14 天未收到您的補充回覆，系統已將案件設為已結案。", ss);
     closed += 1;
   });
   return { closed };

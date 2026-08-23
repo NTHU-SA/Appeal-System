@@ -9,10 +9,24 @@ export const caseSubmissionSchema = z.object({
   desiredOutcome: z.string().trim().min(1, "請填寫希望得到的處理方式").max(4000),
 });
 
-export const studentMessageSchema = z.object({
-  token: z.string().min(32),
-  body: z.string().trim().min(1, "請輸入補充內容").max(8000),
+export const studentFilePayloadSchema = z.object({
+  name: z.string().min(1),
+  mimeType: z.string(),
+  data: z.string().min(1),
 });
+
+export const studentMessageSchema = z
+  .object({
+    token: z.string().min(32),
+    body: z.string().trim().max(8000).optional().default(""),
+    files: z.array(studentFilePayloadSchema).optional().default([]),
+  })
+  .refine(
+    (data) => data.body.trim().length > 0 || (data.files && data.files.length > 0),
+    {
+      message: "請填寫補充說明或選取欲上傳的佐證檔案。",
+    }
+  );
 
 export const draftReplySchema = z.object({
   caseId: z.string().uuid(),
@@ -37,15 +51,15 @@ export const allowedUploadTypes = new Set([
   "image/jpeg",
 ]);
 
-export const maxUploadBytes = 12 * 1024 * 1024;
+export const maxUploadBytes = 8 * 1024 * 1024; // 8MB
 
 export function validateUpload(file: File) {
   if (file.size > maxUploadBytes) {
-    return `${file.name} 超過 12MB 限制`;
+    return `${file.name} 超過 8MB 限制`;
   }
 
-  if (!allowedUploadTypes.has(file.type)) {
-    return `${file.name} 檔案格式不支援`;
+  if (file.type && !allowedUploadTypes.has(file.type)) {
+    return `${file.name} 檔案格式不支援（僅支援 PDF、Word、PNG、JPG）`;
   }
 
   return null;

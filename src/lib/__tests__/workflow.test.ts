@@ -98,3 +98,54 @@ describe("case identifiers", () => {
     expect(createPublicCaseId()).toMatch(/^CV-\d{8}-[A-F0-9]{8}$/);
   });
 });
+
+import { studentMessageSchema, validateUpload } from "@/lib/validation";
+
+describe("student message and supplement validation", () => {
+  const validToken = "a".repeat(32);
+
+  it("accepts text-only supplement", () => {
+    const result = studentMessageSchema.safeParse({
+      token: validToken,
+      body: "這是補充說明",
+      files: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts file-only supplement", () => {
+    const result = studentMessageSchema.safeParse({
+      token: validToken,
+      body: "",
+      files: [
+        {
+          name: "evidence.pdf",
+          mimeType: "application/pdf",
+          data: "YmFzZTY0ZGF0YQ==",
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects when both text and files are empty", () => {
+    const result = studentMessageSchema.safeParse({
+      token: validToken,
+      body: "   ",
+      files: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("validates file upload limits", () => {
+    const validFile = new File(["test content"], "doc.pdf", {
+      type: "application/pdf",
+    });
+    expect(validateUpload(validFile)).toBeNull();
+
+    const invalidType = new File(["test content"], "malicious.exe", {
+      type: "application/x-msdownload",
+    });
+    expect(validateUpload(invalidType)).toContain("檔案格式不支援");
+  });
+});

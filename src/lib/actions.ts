@@ -10,6 +10,7 @@ import {
   memberSchema,
   studentMessageSchema,
   submitReviewSchema,
+  validateUpload,
 } from "@/lib/validation";
 import { sanitizeReplyHtml } from "@/lib/sanitize";
 
@@ -29,18 +30,49 @@ export async function addStudentMessage(
   formData: FormData
 ): Promise<ActionState> {
   try {
+    const token = formString(formData, "token");
+    const body = formString(formData, "body");
+    const rawFiles = formData.getAll("files");
+
+    const files: Array<{ name: string; mimeType: string; data: string }> = [];
+
+    for (const item of rawFiles) {
+      if (
+        typeof item === "object" &&
+        item !== null &&
+        "size" in item &&
+        "arrayBuffer" in item
+      ) {
+        const file = item as File;
+        if (file.size > 0 && file.name) {
+          const err = validateUpload(file);
+          if (err) {
+            return { ok: false, message: err };
+          }
+          const buffer = Buffer.from(await file.arrayBuffer());
+          files.push({
+            name: file.name,
+            mimeType: file.type || "application/octet-stream",
+            data: buffer.toString("base64"),
+          });
+        }
+      }
+    }
+
     const parsed = studentMessageSchema.parse({
-      token: formString(formData, "token"),
-      body: formString(formData, "body"),
+      token,
+      body,
+      files,
     });
+
     await callGas("addStudentMessage", parsed);
 
     revalidatePath(`/case/${parsed.token}`);
-    return { ok: true, message: "補充內容已送出。" };
+    return { ok: true, message: "補充內容與檔案已成功送出。" };
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "補充失敗。",
+      message: error instanceof Error ? error.message : "補充失敗，請稍後再試。",
     };
   }
 }
