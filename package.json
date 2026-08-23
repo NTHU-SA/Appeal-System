@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "gas:push": "clasp -P apps-script push",
+    "gas:deploy": "clasp -P apps-script deploy -i AKfycbwVs5qhZ0EmX8a7bY4KttTf9o8qsSZ6vXwpebMZx0Mnt033gZ4NM5ibkXHITuXPePZw -d \"CampusVoice update\"",
     "gas:open": "clasp -P apps-script open-script"
   },
   "dependencies": {

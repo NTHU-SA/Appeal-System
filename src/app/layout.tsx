@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className="min-h-dvh">
         <TooltipProvider>
           {children}
+          <SiteFooter />
           <Toaster richColors position="top-center" />
         </TooltipProvider>
       </body>

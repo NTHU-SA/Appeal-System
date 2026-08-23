@@ -17,6 +17,17 @@ pnpm gas:push
 6. Copy the logged `SHARED_SECRET` into `GOOGLE_APPS_SCRIPT_SHARED_SECRET`.
 7. Copy the same `/exec` URL into `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
 
+## Deploy Updates
+
+Push the local Apps Script source, then update the existing production deployment:
+
+```bash
+pnpm gas:push
+pnpm gas:deploy
+```
+
+`gas:deploy` uses the existing production deployment ID, so the public `/exec` URL stays the same.
+
 ## Public Form
 
 The public form is served from `Index.html` by `doGet()`. Submissions call `submitPublicCase()` with `google.script.run`, write rows to Sheets, upload files to Drive, and send MailApp notifications.

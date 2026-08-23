@@ -9,18 +9,20 @@ export default function Home() {
     <main className="min-h-dvh">
       <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8 space-y-3 sm:mb-10">
-          <Image
-            src="/logo.png"
-            alt="國立清華大學學生會"
-            width={1503}
-            height={202}
-            sizes="(max-width: 640px) calc(100vw - 32px), 576px"
-            preload
-            className="h-auto w-full max-w-xl"
-          />
-          <h1 className="text-3xl font-semibold tracking-normal text-balance sm:text-5xl">
-            清華大學學生申訴協力系統
-          </h1>
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Image
+              src="/logo.png"
+              alt="國立清華大學學生會"
+              width={1503}
+              height={202}
+              sizes="(max-width: 640px) 42vw, 320px"
+              preload
+              className="h-auto w-[42%] max-w-xs shrink-0"
+            />
+            <h1 className="whitespace-nowrap text-xl font-semibold tracking-normal sm:text-4xl">
+              申訴協力系統
+            </h1>
+          </div>
           <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
             填寫下方表單送出申訴，後續進度與回覆會寄到你的電子郵件。
           </p>
