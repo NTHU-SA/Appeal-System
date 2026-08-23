@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const caseSubmissionSchema = z.object({
   email: z.string().trim().email("請輸入有效的電子郵件"),
-  department: z.string().trim().min(1, "請填寫系級").max(120),
+  department: z.string().trim().min(1, "請選擇年級").max(120),
   name: z.string().trim().min(1, "請填寫姓名").max(80),
   category: z.string().trim().min(1, "請選擇申訴種類").max(120),
   subject: z.string().trim().min(8, "請至少描述 8 個字").max(8000),

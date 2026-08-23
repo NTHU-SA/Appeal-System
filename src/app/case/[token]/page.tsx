@@ -44,7 +44,7 @@ export default async function CaseStatusPage({
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <Info label="姓名" value={caseRow.student_name} />
-            <Info label="系級" value={caseRow.student_department} />
+            <Info label="年級" value={caseRow.student_department} />
             <Info label="申訴種類" value={caseRow.category} />
             <Separator />
             <Info label="申訴問題" value={caseRow.subject} multiline />

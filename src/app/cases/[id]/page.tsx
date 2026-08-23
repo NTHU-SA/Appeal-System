@@ -42,7 +42,7 @@ export default async function AdminCasePage({
             <CardContent className="space-y-4 text-sm">
               <Info label="姓名" value={data.case.student_name} />
               <Info label="Email" value={data.case.student_email} />
-              <Info label="系級" value={data.case.student_department} />
+              <Info label="年級" value={data.case.student_department} />
               <Info label="申訴種類" value={data.case.category} />
               <Separator />
               <Info label="希望處理方式" value={data.case.desired_outcome} multiline />
