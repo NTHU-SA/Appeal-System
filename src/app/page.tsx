@@ -2,6 +2,8 @@ import { EmbeddedCaseForm } from "@/components/cases/embedded-case-form";
 import { getCaseFormUrl } from "@/lib/env";
 import Image from "next/image";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   const formUrl = getCaseFormUrl();
 
