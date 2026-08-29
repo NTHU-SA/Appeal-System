@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState } from "react";
 
 const HEIGHT_MESSAGE_TYPE = "campusvoice:form-height";
-const DEFAULT_HEIGHT = 1200;
+const DEFAULT_HEIGHT = 760;
 const MIN_HEIGHT = 480;
 const MAX_HEIGHT = 4000;
 

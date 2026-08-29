@@ -6,8 +6,8 @@ export default function Home() {
   const formUrl = getCaseFormUrl();
 
   return (
-    <main className="min-h-dvh">
-      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+    <main className="flex-1">
+      <div className="mx-auto w-full max-w-4xl px-4 pt-6 pb-8 sm:px-6 sm:pt-8 sm:pb-10">
         <header className="mb-8 space-y-3 sm:mb-10">
           <div className="flex items-center gap-3 sm:gap-6">
             <Image

@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-dvh">
+      <body className="flex min-h-dvh flex-col">
         <TooltipProvider>
           {children}
           <SiteFooter />

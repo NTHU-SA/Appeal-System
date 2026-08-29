@@ -28,7 +28,7 @@ export default async function CaseStatusPage({
   const { case: caseRow, messages, attachments } = data;
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-4xl px-4 py-8 sm:px-6">
+    <main className="mx-auto flex-1 w-full max-w-4xl px-4 py-8 sm:px-6">
       <div className="mb-6 space-y-2">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           國立清華大學學生會 · 學生申訴協力系統
