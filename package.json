@@ -10,7 +10,11 @@
     "test": "vitest run",
     "gas:push": "clasp -P apps-script push",
     "gas:deploy": "clasp -P apps-script deploy -i AKfycbwVs5qhZ0EmX8a7bY4KttTf9o8qsSZ6vXwpebMZx0Mnt033gZ4NM5ibkXHITuXPePZw -d \"CampusVoice update\"",
-    "gas:open": "clasp -P apps-script open-script"
+    "gas:open": "clasp -P apps-script open-script",
+    "build:worker": "opennextjs-cloudflare build",
+    "preview": "opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy",
+    "deploy:worker": "opennextjs-cloudflare build && wrangler deploy"
   },
   "dependencies": {
     "@tiptap/extension-font-family": "^3.27.1",
@@ -39,6 +43,7 @@
   },
   "devDependencies": {
     "@google/clasp": "^3.3.0",
+    "@opennextjs/cloudflare": "^1.20.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -47,6 +52,7 @@
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "wrangler": "^4.127.1"
   }
 }

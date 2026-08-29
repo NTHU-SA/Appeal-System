@@ -56,6 +56,7 @@ export function StudentMessageForm({ token }: { token: string }) {
   // Reset form inputs upon successful submission
   useEffect(() => {
     if (state.ok) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBodyText("");
       setFiles([]);
       setFileError(null);

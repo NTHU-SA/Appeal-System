@@ -43,3 +43,7 @@ next-env.d.ts
 # clasp
 .clasp.json
 !.clasp.json.example
+
+# cloudflare & open-next
+.open-next
+.wrangler

@@ -2,64 +2,85 @@
 
 這個專案分成兩個部署：
 
-- **前端與後台**：Next.js 部署到 Vercel。
+- **前端與後台**：Next.js 部署到 **Cloudflare Workers**（使用 OpenNext）。
 - **資料、表單、附件、寄信、自動結案**：Google Apps Script Web App，搭配 Google Sheets、Drive、Gmail。
 
-目前公開送件表單由 Apps Script Web App 提供；Vercel 首頁只是放一顆按鈕連到那個表單。
+目前公開送件表單由 Apps Script Web App 提供；Cloudflare Worker 首頁放按鈕連到該表單。
+
+---
 
 ## 1. 先準備
 
 需要：
 
 - 一個 Google 帳號，建議使用學權組織共用或職務帳號。
-- 一個 Vercel 帳號與專案。
+- 一個 Cloudflare 帳號（Workers 免費方案即可）。
 - Node/pnpm 已可在本機執行。
 
-本機先確認：
+本機先確認測試與檢查通過：
 
 ```bash
 pnpm install
 pnpm lint
 pnpm test
-pnpm build
 ```
 
-## 2. 部署前端到 Vercel
+---
 
-在 Vercel 建立專案，連到這個 Git repo。
+## 2. 部署前端到 Cloudflare Workers
 
-建議設定：
+### A. 登入 Cloudflare
 
-- Framework Preset：Next.js
-- Install Command：`pnpm install`
-- Build Command：`pnpm build`
-- Output Directory：不用填，讓 Vercel 自動偵測
-
-第一次部署可以先讓它失敗或先不登入後台，因為 OAuth 和 GAS URL 還沒設定完。等下面步驟完成後，再回 Vercel 補環境變數並 Redeploy。
-
-Vercel 環境變數在：
-
-`Project Settings` -> `Environment Variables`
-
-要設定：
-
-```txt
-NEXT_PUBLIC_APP_URL=https://你的-vercel-domain
-NEXT_PUBLIC_CASE_FORM_URL=https://script.google.com/macros/s/.../exec
-GOOGLE_APPS_SCRIPT_WEB_APP_URL=https://script.google.com/macros/s/.../exec
-GOOGLE_APPS_SCRIPT_SHARED_SECRET=setupCampusVoice 產生的 SHARED_SECRET
-AUTH_SECRET=一段隨機長字串
-AUTH_GOOGLE_ID=Google OAuth Client ID
-AUTH_GOOGLE_SECRET=Google OAuth Client Secret
-```
-
-`AUTH_SECRET` 可以用這個產生：
+在終端機登入 Wrangler：
 
 ```bash
-openssl rand -base64 32
+pnpm exec wrangler login
 ```
 
-`NEXT_PUBLIC_` 開頭的變數會進到瀏覽器端，所以只放公開 URL。`GOOGLE_APPS_SCRIPT_SHARED_SECRET`、`AUTH_SECRET`、`AUTH_GOOGLE_SECRET` 不要加 `NEXT_PUBLIC_`。
+### B. 設定 Cloudflare Workers 敏感環境變數 (Secrets)
+
+請將以下敏感金鑰透過 `wrangler secret put` 寫入 Worker（也可在 Cloudflare Dashboard > Workers & Pages > campusvoice > Settings > Variables 填入）：
+
+```bash
+# NextAuth Session 加密金鑰（產生隨機字串：openssl rand -base64 32）
+pnpm exec wrangler secret put AUTH_SECRET
+
+# Google OAuth 憑證（由 Google Cloud Console 取得）
+pnpm exec wrangler secret put AUTH_GOOGLE_ID
+pnpm exec wrangler secret put AUTH_GOOGLE_SECRET
+
+# Google Apps Script 串接設定（由步驟 3、4 取得）
+pnpm exec wrangler secret put GOOGLE_APPS_SCRIPT_WEB_APP_URL
+pnpm exec wrangler secret put GOOGLE_APPS_SCRIPT_SHARED_SECRET
+```
+
+### C. 設定公開環境變數 (Vars)
+
+在 `wrangler.jsonc` 的 `vars` 區塊設定（或在 Cloudflare Dashboard 設定）：
+
+```jsonc
+"vars": {
+  "NEXT_PUBLIC_APP_URL": "https://campusvoice.<你的帳號>.workers.dev",
+  "NEXT_PUBLIC_CASE_FORM_URL": "https://script.google.com/macros/s/.../exec"
+}
+```
+
+> **注意**：`NEXT_PUBLIC_` 開頭的變數會進到瀏覽器端，所以只放公開 URL。機密金鑰請務必使用 `wrangler secret put`。
+
+### D. 本機建置與預覽
+
+```bash
+pnpm build:worker
+pnpm preview
+```
+
+### E. 正式部署
+
+```bash
+pnpm run deploy
+```
+
+---
 
 ## 3. 建立與部署 Apps Script
 
@@ -112,7 +133,7 @@ pnpm gas:open
 3. 加入：
 
 ```txt
-APP_URL=https://你的-vercel-domain
+APP_URL=https://你的-cloudflare-worker-網址
 ```
 
 然後執行一次 `setupCampusVoice()`：
@@ -132,6 +153,8 @@ APP_URL=https://你的-vercel-domain
 - 每天凌晨 2 點的自動結案 trigger
 - 把執行 setup 的 Google 帳號加入 `Members`，角色是 `minister`
 
+---
+
 ## 4. 發布 Apps Script Web App
 
 在 Apps Script 編輯器：
@@ -149,20 +172,23 @@ APP_URL=https://你的-vercel-domain
 https://script.google.com/macros/s/......../exec
 ```
 
-把這個 `/exec` URL 同時填到 Vercel：
+把這個 `/exec` URL 設定到 Cloudflare Worker：
 
-```txt
-NEXT_PUBLIC_CASE_FORM_URL=同一個 /exec URL
-GOOGLE_APPS_SCRIPT_WEB_APP_URL=同一個 /exec URL
+```bash
+pnpm exec wrangler secret put GOOGLE_APPS_SCRIPT_WEB_APP_URL
+# 輸入 /exec URL
 ```
 
-再把 `setupCampusVoice()` log 裡的 secret 填到：
+同時將 `NEXT_PUBLIC_CASE_FORM_URL` 填入 `wrangler.jsonc`。
 
-```txt
-GOOGLE_APPS_SCRIPT_SHARED_SECRET=...
+並把 `setupCampusVoice()` log 裡的 secret 填入：
+
+```bash
+pnpm exec wrangler secret put GOOGLE_APPS_SCRIPT_SHARED_SECRET
+# 輸入 SHARED_SECRET
 ```
 
-設定完 Vercel env 後，重新部署 Vercel。
+---
 
 ## 5. 設定 Google OAuth 登入
 
@@ -178,10 +204,10 @@ GOOGLE_APPS_SCRIPT_SHARED_SECRET=...
 6. Application type 選 `Web application`。
 7. 加 Authorized redirect URIs：
 
-正式站：
+正式站（Cloudflare Worker 網址）：
 
 ```txt
-https://你的-vercel-domain/api/auth/callback/google
+https://你的-worker-網址/api/auth/callback/google
 ```
 
 本機開發：
@@ -190,18 +216,20 @@ https://你的-vercel-domain/api/auth/callback/google
 http://localhost:3000/api/auth/callback/google
 ```
 
-建立後，把值填到 Vercel：
+建立後，把值設定到 Cloudflare Worker：
 
-```txt
-AUTH_GOOGLE_ID=Client ID
-AUTH_GOOGLE_SECRET=Client secret
+```bash
+pnpm exec wrangler secret put AUTH_GOOGLE_ID
+pnpm exec wrangler secret put AUTH_GOOGLE_SECRET
 ```
 
-如果登入時出現 `redirect_uri_mismatch`，通常就是 Google Cloud Console 的 Authorized redirect URI 跟實際 Vercel domain 不完全一致。
+如果登入時出現 `redirect_uri_mismatch`，通常就是 Google Cloud Console 的 Authorized redirect URI 跟實際 Cloudflare Worker 網址不完全一致。
+
+---
 
 ## 6. 自動寄信怎麼運作
 
-目前寄信不是 Vercel 寄，也不是 Resend 寄，而是 Apps Script 用 `MailApp.sendEmail()` 透過部署者的 Google/Gmail 身分寄。
+目前寄信不是 Cloudflare 寄，也不是 Resend 寄，而是 Apps Script 用 `MailApp.sendEmail()` 透過部署者的 Google/Gmail 身分寄。
 
 會寄信的情境：
 
@@ -215,6 +243,8 @@ AUTH_GOOGLE_SECRET=Client secret
 - 第一次執行 `setupCampusVoice()` 或第一次送件時，Google 會要求授權。
 - 寄信會吃 Google 帳號每日 quota。
 - 建議用組織共用帳號部署 Apps Script，避免人員離職後權限失效。
+
+---
 
 ## 7. 賦予管理員與部員權限
 
@@ -253,17 +283,44 @@ updated_at: 可留空
 
 後台登入 email 必須跟 `Members.email` 完全一致，大小寫不重要。
 
+---
+
 ## 8. 日後更新程式
 
-### 更新 Next/Vercel
-
-照一般 Git/Vercel 流程：
+### 更新 Next.js / Cloudflare Worker
 
 ```bash
-git push
+pnpm run deploy
 ```
 
-Vercel 會自動重新部署。
+或透過 GitHub Actions 自動部署：
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install
+      - run: pnpm build:worker
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+```
 
 ### 更新 Apps Script
 
@@ -273,8 +330,6 @@ Vercel 會自動重新部署。
 pnpm gas:push
 ```
 
-如果你部署的是 Apps Script「測試部署」或 head deployment，push 後通常能直接測。
-
 正式使用建議在 Apps Script UI：
 
 1. `Deploy`
@@ -283,43 +338,25 @@ pnpm gas:push
 4. Version 選 `New version`
 5. Deploy
 
-這樣使用者吃到的是固定版本，比較不會因為半成品 push 影響線上。
+---
 
-## 9. 為什麼送件表單由 Apps Script Web App 提供？不能直接用 Vercel 嗎？
+## 9. 快速檢查清單
 
-可以直接用 Vercel，技術上沒有問題。現在放在 Apps Script 的原因是為了讓 Google Workspace 串接最少設定、最少密鑰：
-
-- Apps Script 表單可以直接用部署者身分寫 Google Sheets、存 Drive、用 Gmail/MailApp 寄信。
-- 前端送件和 Google 檔案操作都在同一個 Google runtime 內，不需要在 Vercel 設 Google service account、Drive API、Sheets API、Gmail API 或 domain-wide delegation。
-- 附件可以直接從 Apps Script Web App 寫入 Drive folder，流程比較短。
-- 學權組織若主要用 Google Workspace，管理資料與排錯都會集中在 Google 端。
-
-如果改成「表單直接在 Vercel」，也可以，而且 UX 會更一致。代價是要多做一層 Google API server integration：
-
-- Next.js route/server action 接表單與附件。
-- Vercel server 端用 Google API 寫 Sheets、Drive、Gmail。
-- 需要 service account 或 OAuth token 管理。
-- Gmail 用個人帳號寄信時會牽涉 refresh token；用 service account 寄 Gmail 通常需要 Google Workspace 管理員設定 domain-wide delegation。
-- 要自己處理附件大小、Vercel function body limit、timeout、重試與錯誤補償。
-
-所以目前選 Apps Script Web App 是「Google 串接方便優先」。如果未來想讓表單完全融合在 Vercel 站內，建議把寄信改用 Resend 或 Google Workspace service account，再把 `apps-script/Index.html` 的 UI 搬回 Next.js。
-
-## 10. 快速檢查清單
-
-- Vercel 已設定全部 env。
+- Cloudflare Worker 已設定全部 Secrets 與 Vars。
 - Apps Script 已部署 Web app，access 是 `Anyone`。
 - `NEXT_PUBLIC_CASE_FORM_URL` 能開出表單。
 - `GOOGLE_APPS_SCRIPT_WEB_APP_URL` 是同一個 `/exec` URL。
 - `GOOGLE_APPS_SCRIPT_SHARED_SECRET` 跟 Apps Script script property 裡的 `SHARED_SECRET` 一致。
-- Google OAuth redirect URI 是 `https://你的-domain/api/auth/callback/google`。
+- Google OAuth redirect URI 是 `https://你的-worker-網址/api/auth/callback/google`。
 - `Members` tab 至少有一個 `minister`。
 - 用表單送件後，Sheet 有新增案件、Drive 有附件、學生信箱有收到信。
 
+---
+
 ## 參考文件
 
-- [Vercel Environment Variables](https://vercel.com/docs/environment-variables)
-- [Vercel Managing Environment Variables](https://vercel.com/docs/environment-variables/managing-environment-variables)
+- [OpenNext for Cloudflare](https://opennext.js.org/cloudflare)
+- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
+- [Cloudflare Wrangler Configuration](https://developers.cloudflare.com/workers/wrangler/configuration/)
 - [Apps Script Web Apps](https://developers.google.com/apps-script/guides/web)
-- [Apps Script Deployments](https://developers.google.com/apps-script/concepts/deployments)
-- [Apps Script Properties Service](https://developers.google.com/apps-script/guides/properties)
 - [Auth.js Google Provider](https://authjs.dev/reference/core/providers/google)
