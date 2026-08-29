@@ -3,7 +3,7 @@ import { KeyRound, ShieldCheck } from "lucide-react";
 
 import { signInWithGoogle } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   return (
@@ -13,7 +13,8 @@ export default function LoginPage() {
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <CardTitle>清華大學學生申訴協力系統 後台登入</CardTitle>
+          <CardTitle>清華大學學生申訴協力系統</CardTitle>
+          <CardDescription>管理員／幹部後台登入</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form action={signInWithGoogle}>

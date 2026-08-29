@@ -20,7 +20,7 @@ export default function Home() {
               className="h-auto w-[42%] max-w-xs shrink-0"
             />
             <h1 className="text-xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
-              申訴協力系統
+              清華大學學生申訴協力系統
             </h1>
           </div>
           <p className="max-w-2xl text-xs text-muted-foreground sm:text-base">
