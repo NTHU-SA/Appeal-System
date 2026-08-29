@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -14,7 +14,8 @@
     "build:worker": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
-    "deploy:worker": "opennextjs-cloudflare build && wrangler deploy"
+    "deploy:worker": "opennextjs-cloudflare build && wrangler deploy",
+    "next:build": "next build"
   },
   "dependencies": {
     "@tiptap/extension-font-family": "^3.27.1",
