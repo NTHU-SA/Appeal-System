@@ -3,7 +3,9 @@
   "name": "campusvoice",
   "main": ".open-next/worker.js",
   "compatibility_date": "2024-09-23",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -22,5 +24,17 @@
       "persist": true,
       "head_sampling_rate": 1
     }
-  }
+  },
+  "routes": [
+    {
+      "pattern": "campusvoice.nthusa.tw",
+      "zone_name": "nthusa.tw",
+      "custom_domain": true
+    },
+    {
+      "pattern": "appeal.nthusa.tw",
+      "zone_name": "nthusa.tw",
+      "custom_domain": true
+    }
+  ]
 }
