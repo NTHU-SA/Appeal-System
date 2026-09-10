@@ -166,6 +166,11 @@
         }
       }
 
+      .field-col {
+        display: flex;
+        flex-direction: column;
+      }
+
       label {
         display: grid;
         gap: 8px;
@@ -629,18 +634,33 @@
                 電子郵件
                 <input name="email" type="email" autocomplete="email" required />
               </label>
-              <label>
-                年級
-                <select name="department" required>
-                  <option value="">請選擇</option>
-                  <option>大一</option>
-                  <option>大二</option>
-                  <option>大三</option>
-                  <option>大四</option>
-                  <option>碩士</option>
-                  <option>博士</option>
-                </select>
-              </label>
+              <div class="field-col">
+                <label>
+                  年級
+                  <select id="departmentSelect" name="department" required>
+                    <option value="">請選擇</option>
+                    <option>大一</option>
+                    <option>大二</option>
+                    <option>大三</option>
+                    <option>大四</option>
+                    <option>碩士</option>
+                    <option>博士</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </label>
+                <div id="departmentOtherWrapper" style="display: none; margin-top: 10px;">
+                  <label>
+                    年級／身分說明
+                    <input
+                      id="departmentOther"
+                      name="departmentOther"
+                      type="text"
+                      placeholder="請填寫，例如：延畢、交換生、碩專班"
+                      maxlength="60"
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div class="grid two">
@@ -750,7 +770,25 @@
       const copyIdBtn = document.querySelector("#copyIdBtn");
       const copyBtnText = document.querySelector("#copyBtnText");
       const modalCloseBtn = document.querySelector("#modalCloseBtn");
+      const departmentSelect = document.querySelector("#departmentSelect");
+      const departmentOtherWrapper = document.querySelector("#departmentOtherWrapper");
+      const departmentOther = document.querySelector("#departmentOther");
       const maxFileBytes = 8 * 1024 * 1024;
+
+      if (departmentSelect) {
+        departmentSelect.addEventListener("change", () => {
+          if (departmentSelect.value === "其他") {
+            departmentOtherWrapper.style.display = "block";
+            departmentOther.required = true;
+            departmentOther.focus();
+          } else {
+            departmentOtherWrapper.style.display = "none";
+            departmentOther.required = false;
+            departmentOther.value = "";
+          }
+          reportFrameHeight();
+        });
+      }
 
       function reportFrameHeight() {
         if (window.self === window.top) return;
@@ -927,13 +965,24 @@
 
         const data = new FormData(form);
         const submittedEmail = String(data.get("email") || "");
+        let submittedDepartment = String(data.get("department") || "").trim();
+
+        if (submittedDepartment === "其他") {
+          const otherText = String(data.get("departmentOther") || "").trim();
+          if (!otherText) {
+            setNotice("請填寫年級／身分說明。", "error");
+            if (departmentOther) departmentOther.focus();
+            return;
+          }
+          submittedDepartment = `其他, ${otherText}`;
+        }
 
         showLoading(true);
 
         try {
           const payload = {
             email: submittedEmail,
-            department: data.get("department"),
+            department: submittedDepartment,
             name: data.get("name"),
             category: data.get("category"),
             subject: data.get("subject"),
@@ -945,6 +994,13 @@
             .withSuccessHandler((result) => {
               showLoading(false);
               form.reset();
+              if (departmentOtherWrapper) {
+                departmentOtherWrapper.style.display = "none";
+              }
+              if (departmentOther) {
+                departmentOther.required = false;
+                departmentOther.value = "";
+              }
               selectedFiles = [];
               renderFileList();
               openSuccessModal(result.publicId, submittedEmail);
