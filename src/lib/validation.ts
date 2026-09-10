@@ -18,8 +18,9 @@ export const studentFilePayloadSchema = z.object({
 export const studentMessageSchema = z
   .object({
     token: z.string().min(32),
+    requestId: z.string().uuid().optional(),
     body: z.string().trim().max(8000).optional().default(""),
-    files: z.array(studentFilePayloadSchema).optional().default([]),
+    files: z.array(studentFilePayloadSchema).max(3, "每次最多上傳 3 個檔案。").optional().default([]),
   })
   .refine(
     (data) => data.body.trim().length > 0 || (data.files && data.files.length > 0),
