@@ -11,9 +11,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    jwt({ token, profile }) {
+    jwt({ token, user, profile }) {
       if (profile?.email) {
         token.email = String(profile.email).toLowerCase();
+      } else if (user?.email) {
+        token.email = String(user.email).toLowerCase();
       }
       return token;
     },

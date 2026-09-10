@@ -136,8 +136,12 @@ export async function signInWithGoogle() {
   await signIn("google", { redirectTo: "/dashboard" });
 }
 
-export async function signOut() {
-  await authSignOut({ redirectTo: "/" });
+export async function signOut(formData?: FormData) {
+  const redirectTo =
+    formData && typeof formData.get === "function" && formData.get("redirectTo")
+      ? String(formData.get("redirectTo"))
+      : "/";
+  await authSignOut({ redirectTo });
 }
 
 export async function getStaffOrSetup() {

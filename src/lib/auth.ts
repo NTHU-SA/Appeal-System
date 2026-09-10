@@ -16,12 +16,16 @@ export async function getCurrentStaff(): Promise<StaffSession | null> {
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
 
-  const data = await callGas<{ role: UserRole | null }>("getMemberRole", {
-    email,
-  });
-  const role = staffRoleFromMemberRole(data.role);
-  if (role) {
-    return { id: email, email, role };
+  try {
+    const data = await callGas<{ role: UserRole | null }>("getMemberRole", {
+      email,
+    });
+    const role = staffRoleFromMemberRole(data.role);
+    if (role) {
+      return { id: email, email, role };
+    }
+  } catch (error) {
+    console.error("getCurrentStaff error:", error);
   }
 
   return null;
