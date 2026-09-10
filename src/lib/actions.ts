@@ -61,13 +61,13 @@ export async function addStudentMessage(
 
     const parsed = studentMessageSchema.parse({
       token,
+      requestId: formString(formData, "requestId") || undefined,
       body,
       files,
     });
 
     await callGas("addStudentMessage", parsed);
 
-    revalidatePath(`/case/${parsed.token}`);
     return { ok: true, message: "補充內容與檔案已成功送出。" };
   } catch (error) {
     return {

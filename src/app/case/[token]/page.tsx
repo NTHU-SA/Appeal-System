@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ExternalLink, FileText, ImageIcon } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, MessageSquare, Paperclip } from "lucide-react";
 
 import { getCaseByToken } from "@/lib/data";
 import { statusLabels } from "@/lib/types";
@@ -8,6 +8,7 @@ import { StudentMessageForm } from "@/components/cases/student-message-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 export default async function CaseStatusPage({
   params,
@@ -16,12 +17,7 @@ export default async function CaseStatusPage({
 }) {
   const { token } = await params;
 
-  let data = null;
-  try {
-    data = await getCaseByToken(token);
-  } catch {
-    data = null;
-  }
+  const data = await getCaseByToken(token);
 
   if (!data) notFound();
 
@@ -59,10 +55,14 @@ export default async function CaseStatusPage({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <nav aria-label="案件操作" className="mb-6 flex flex-wrap gap-2">
+        <Button asChild><a href="#reply"><Paperclip className="h-4 w-4" />留言與補件</a></Button>
+        <Button asChild variant="outline"><a href="#conversation"><MessageSquare className="h-4 w-4" />查看回覆</a></Button>
+      </nav>
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
         <Card className="shadow-xs">
           <CardHeader>
-            <CardTitle className="text-lg">案件內容摘要</CardTitle>
+            <CardTitle className="text-lg">案件摘要</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="grid grid-cols-2 gap-4">
@@ -77,9 +77,9 @@ export default async function CaseStatusPage({
           </CardContent>
         </Card>
 
-        <Card className="shadow-xs">
+        <Card id="reply" className="order-first scroll-mt-6 shadow-xs lg:order-last">
           <CardHeader>
-            <CardTitle className="text-lg">補充說明與檔案補件</CardTitle>
+            <CardTitle className="text-lg">留言與補件</CardTitle>
           </CardHeader>
           <CardContent>
             <StudentMessageForm token={token} />
@@ -87,9 +87,9 @@ export default async function CaseStatusPage({
         </Card>
       </div>
 
-      <Card className="mt-6 shadow-xs">
+      <Card id="conversation" className="mt-6 scroll-mt-6 shadow-xs">
         <CardHeader>
-          <CardTitle className="text-lg">案件紀錄與歷史回覆</CardTitle>
+          <CardTitle className="text-lg">對話紀錄</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
@@ -106,7 +106,7 @@ export default async function CaseStatusPage({
                 >
                   <div className="mb-2 flex items-center justify-between gap-3 text-xs">
                     <span className="font-semibold text-foreground">
-                      {isStudent ? "🧑‍🎓 學生回覆 / 補充" : "🏛️ 學權組織 / 幹部回覆"}
+                      {isStudent ? "你" : "學權幹部"}
                     </span>
                     <time className="text-muted-foreground">{formatDateTime(message.created_at)}</time>
                   </div>
@@ -128,7 +128,7 @@ export default async function CaseStatusPage({
           {attachments.length ? (
             <div className="space-y-3 pt-2">
               <h2 className="text-sm font-semibold text-foreground">
-                📁 案件佐證附件 ({attachments.length})
+                案件附件 ({attachments.length})
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 {attachments.map((attachment) => (
