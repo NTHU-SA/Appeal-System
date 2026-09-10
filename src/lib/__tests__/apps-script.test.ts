@@ -156,4 +156,88 @@ describe("student supplement persistence", () => {
     expect(data).not.toHaveProperty("drafts");
     expect(ctx.readObjects_.mock.calls.map((call: unknown[]) => call[1])).toEqual(["Cases", "Messages", "Attachments"]);
   });
+
+  it("grants complainant viewer access to folder and uploaded files on submission", () => {
+    const addFolderViewer = vi.fn();
+    const addFileViewer = vi.fn();
+    const file = {
+      getId: () => "file-id",
+      getUrl: () => "https://drive.google.com/file",
+      getName: () => "doc.pdf",
+      getMimeType: () => "application/pdf",
+      addViewer: addFileViewer,
+    };
+    const folder = {
+      createFile: vi.fn(() => file),
+      addViewer: addFolderViewer,
+    };
+    const ctx = runtime({
+      MailApp: { sendEmail: vi.fn() },
+      Utilities: {
+        getUuid: vi.fn(() => "uuid"),
+        base64Decode: () => [1, 2],
+        newBlob: () => ({}),
+      },
+    });
+    ctx.getSpreadsheet_ = () => ({});
+    ctx.getAppUrl_ = () => "https://campus.example.com";
+    ctx.getDriveFolder_ = () => ({});
+    ctx.getOrCreateSubFolder_ = () => folder;
+    ctx.createToken_ = () => "token";
+    ctx.sha256Hex_ = () => "hash";
+    ctx.createPublicCaseId_ = () => "CV-test";
+    ctx.appendObject_ = vi.fn();
+    ctx.notifyStaff_ = vi.fn();
+
+    ctx.createCaseFromSubmission_({
+      email: "Student@Example.COM ",
+      department: "大一",
+      name: "測試生",
+      category: "生活",
+      subject: "測試申訴內容超過八個字",
+      desiredOutcome: "希望處理",
+      files: [{ name: "doc.pdf", mimeType: "application/pdf", data: "AQI=" }],
+    });
+
+    expect(addFolderViewer).toHaveBeenCalledWith("student@example.com");
+    expect(addFileViewer).toHaveBeenCalledWith("student@example.com");
+  });
+
+  it("grants complainant viewer access to folder and files in grantCaseDrivePermissions", () => {
+    const addFolderViewer = vi.fn();
+    const addFileViewer = vi.fn();
+    const mockFile = { addViewer: addFileViewer };
+    let fileIterDone = false;
+    const folder = {
+      addViewer: addFolderViewer,
+      getFiles: () => ({
+        hasNext: () => !fileIterDone,
+        next: () => {
+          fileIterDone = true;
+          return mockFile;
+        },
+      }),
+    };
+    let folderIterDone = false;
+    const rootFolder = {
+      getFoldersByName: () => ({
+        hasNext: () => !folderIterDone,
+        next: () => {
+          folderIterDone = true;
+          return folder;
+        },
+      }),
+    };
+
+    const ctx = runtime();
+    ctx.getSpreadsheet_ = () => ({});
+    ctx.readObjects_ = (_ss: unknown, tab: string) =>
+      tab === "Cases" ? [{ public_id: "CV-1234", student_email: "test@example.com" }] : [];
+    ctx.getDriveFolder_ = () => rootFolder;
+
+    const result = ctx.grantCaseDrivePermissions("CV-1234");
+    expect(result).toEqual({ ok: true, fileCount: 1 });
+    expect(addFolderViewer).toHaveBeenCalledWith("test@example.com");
+    expect(addFileViewer).toHaveBeenCalledWith("test@example.com");
+  });
 });

@@ -17,6 +17,15 @@ function getOrCreateSubFolder_(parent, name) {
   return folders.hasNext() ? folders.next() : parent.createFolder(name);
 }
 
+function grantViewerAccessSafe_(target, email) {
+  if (!email || !target || typeof target.addViewer !== "function") return;
+  try {
+    target.addViewer(email);
+  } catch (err) {
+    console.warn(`Could not add viewer ${email}:`, err);
+  }
+}
+
 function installAutoCloseTrigger_() {
   const props = PropertiesService.getScriptProperties();
   const existingId = props.getProperty("AUTO_CLOSE_TRIGGER_ID");

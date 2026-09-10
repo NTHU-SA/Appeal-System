@@ -10,6 +10,7 @@ function createCaseFromSubmission_(input) {
   const messageId = Utilities.getUuid();
   const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
   const studentEmail = String(input.email).trim().toLowerCase();
+  grantViewerAccessSafe_(caseFolder, studentEmail);
 
   const caseRow = {
     id: caseId,
@@ -53,6 +54,7 @@ function createCaseFromSubmission_(input) {
     if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
     const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
     const file = caseFolder.createFile(blob);
+    grantViewerAccessSafe_(file, studentEmail);
     appendObject_(ss, "Attachments", {
       id: Utilities.getUuid(),
       case_id: caseId,
@@ -168,6 +170,7 @@ function saveStudentMessage_(ss, payload) {
   if (files.length > 0) {
     const rootFolder = getDriveFolder_();
     const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
+    grantViewerAccessSafe_(caseFolder, caseData.case.student_email);
     const uploadedNames = [];
 
     const savedAttachments = readObjects_(ss, "Attachments").filter((row) => row.message_id === messageId && row.case_id === caseId);
@@ -180,6 +183,7 @@ function saveStudentMessage_(ss, payload) {
       if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
       const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
       const file = caseFolder.createFile(blob);
+      grantViewerAccessSafe_(file, caseData.case.student_email);
       uploadedNames.push(file.getName());
 
       appendObject_(ss, "Attachments", {
@@ -380,4 +384,29 @@ function restoreStudentCaseLink(publicId) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Run manually in the Apps Script editor to grant complainant access to a case folder and its attachments.
+function grantCaseDrivePermissions(publicId) {
+  const ss = getSpreadsheet_();
+  const match = readObjects_(ss, "Cases").find(
+    (item) => item.public_id === publicId || item.id === publicId,
+  );
+  if (!match) throw new Error("Case not found.");
+  if (!match.student_email) throw new Error("Case has no student email.");
+
+  const rootFolder = getDriveFolder_();
+  const folders = rootFolder.getFoldersByName(match.public_id);
+  if (!folders.hasNext()) return { ok: false, message: "Folder not found." };
+  const folder = folders.next();
+  grantViewerAccessSafe_(folder, match.student_email);
+
+  const files = folder.getFiles();
+  let count = 0;
+  while (files.hasNext()) {
+    const file = files.next();
+    grantViewerAccessSafe_(file, match.student_email);
+    count++;
+  }
+  return { ok: true, fileCount: count };
 }
