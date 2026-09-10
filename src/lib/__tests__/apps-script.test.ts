@@ -51,6 +51,30 @@ describe("Apps Script case links", () => {
     expect(ctx.appendObject_).not.toHaveBeenCalled();
   });
 
+  it("rejects more than 10 files on submission", () => {
+    const ctx = runtime();
+    ctx.getSpreadsheet_ = () => ({});
+    ctx.getAppUrl_ = () => "https://campus.example.com";
+    ctx.getDriveFolder_ = vi.fn();
+    ctx.appendObject_ = vi.fn();
+    const files = Array.from({ length: 11 }, (_, i) => ({
+      name: `file${i}.pdf`,
+      mimeType: "application/pdf",
+      data: "AQI=",
+    }));
+    expect(() =>
+      ctx.createCaseFromSubmission_({
+        email: "student@example.com",
+        department: "大三",
+        name: "學生",
+        category: "生活",
+        subject: "申訴問題測試內容",
+        desiredOutcome: "協助",
+        files,
+      }),
+    ).toThrow("最多上傳 10 個檔案");
+  });
+
   it("persists each case's unique link and uses it in both email formats", () => {
     const sendEmail = vi.fn();
     const ctx = runtime({ MailApp: { sendEmail }, Utilities: { getUuid: vi.fn(() => "uuid") } });

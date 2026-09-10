@@ -45,7 +45,9 @@ function createCaseFromSubmission_(input) {
     created_at: now,
   });
 
-  (input.files || []).forEach((fileInput) => {
+  const files = input.files || [];
+  if (files.length > 10) throw new Error("最多上傳 10 個檔案。");
+  files.forEach((fileInput) => {
     const bytes = Utilities.base64Decode(fileInput.data);
     if (bytes.length > 8 * 1024 * 1024) throw new Error(`${fileInput.name} 超過 8MB 限制。`);
     if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);

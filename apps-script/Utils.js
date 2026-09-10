@@ -44,6 +44,8 @@ function validatePublicCaseInput_(input) {
     if (!String(input[key] || "").trim()) throw new Error("請填寫所有必填欄位。");
   });
   if (String(input.subject || "").trim().length < 8) throw new Error("申訴問題請至少描述 8 個字。");
+  const files = input.files || [];
+  if (Array.isArray(files) && files.length > 10) throw new Error("最多上傳 10 個檔案。");
 }
 
 function isAllowedUpload_(mimeType) {

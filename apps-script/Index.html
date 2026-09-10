@@ -218,12 +218,78 @@
         padding: 14px;
       }
 
+      .file-box-label {
+        display: block;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 650;
+        margin-bottom: 8px;
+      }
+
       .file-list {
         display: grid;
         gap: 7px;
         margin-top: 10px;
         color: var(--muted);
         font-size: 13px;
+      }
+
+      .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: var(--ink);
+      }
+
+      .file-item-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .file-item-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .file-item-size {
+        flex-shrink: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .file-item-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: background 140ms ease, color 140ms ease;
+      }
+
+      .file-item-remove:hover {
+        background: rgba(161, 55, 55, 0.12);
+        color: var(--bad);
       }
 
       .actions {
@@ -605,12 +671,12 @@
               <textarea name="desiredOutcome" required placeholder="例如協助轉介、釐清規則、正式申訴、與單位溝通等。"></textarea>
             </label>
 
-            <label class="file-box">
-              上傳檔案
+            <div class="file-box">
+              <span class="file-box-label">上傳檔案</span>
               <input id="attachments" name="attachments" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
-              <p class="hint">支援 PDF、Word、PNG、JPG，可複選，每個檔案上限 8MB。</p>
+              <p class="hint">支援 PDF、Word、PNG、JPG，可複選，最多 10 個檔案，每個檔案上限 8MB。</p>
               <div id="fileList" class="file-list"></div>
-            </label>
+            </div>
 
             <div class="actions">
               <p class="hint">送出前請再次確認內容；送出後可用 email 中的案件連結補充文字資料。</p>
@@ -704,13 +770,78 @@
         requestAnimationFrame(reportFrameHeight);
       }
 
-      attachments.addEventListener("change", () => {
+      const maxFileCount = 10;
+      let selectedFiles = [];
+
+      function renderFileList() {
         fileList.innerHTML = "";
-        Array.from(attachments.files || []).forEach((file) => {
+        selectedFiles.forEach((file, index) => {
           const item = document.createElement("div");
-          item.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+          item.className = "file-item";
+
+          const info = document.createElement("div");
+          info.className = "file-item-info";
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "file-item-name";
+          nameSpan.textContent = file.name;
+
+          const sizeSpan = document.createElement("span");
+          sizeSpan.className = "file-item-size";
+          sizeSpan.textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+
+          info.appendChild(nameSpan);
+          info.appendChild(sizeSpan);
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "file-item-remove";
+          removeBtn.setAttribute("aria-label", `移除 ${file.name}`);
+          removeBtn.setAttribute("title", "移除此檔案");
+          removeBtn.innerHTML = "&times;";
+          removeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            removeFile(index);
+          });
+
+          item.appendChild(info);
+          item.appendChild(removeBtn);
           fileList.appendChild(item);
         });
+        reportFrameHeight();
+      }
+
+      function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        renderFileList();
+      }
+
+      attachments.addEventListener("change", () => {
+        setNotice("", "");
+        const newFiles = Array.from(attachments.files || []);
+        if (!newFiles.length) return;
+
+        const oversize = newFiles.find((file) => file.size > maxFileBytes);
+        if (oversize) {
+          setNotice(`「${oversize.name}」超過 8MB 限制，請縮減大小後再上傳。`, "error");
+          attachments.value = "";
+          return;
+        }
+
+        for (const file of newFiles) {
+          if (!selectedFiles.some((f) => f.name === file.name && f.size === file.size)) {
+            selectedFiles.push(file);
+          }
+        }
+
+        if (selectedFiles.length > maxFileCount) {
+          setNotice(`最多上傳 ${maxFileCount} 個檔案，已為您保留前 ${maxFileCount} 個。`, "error");
+          selectedFiles = selectedFiles.slice(0, maxFileCount);
+        }
+
+        attachments.value = "";
+        renderFileList();
       });
 
       function showLoading(show) {
@@ -783,8 +914,12 @@
         event.preventDefault();
         setNotice("", "");
 
-        const files = Array.from(attachments.files || []);
-        const oversize = files.find((file) => file.size > maxFileBytes);
+        if (selectedFiles.length > maxFileCount) {
+          setNotice(`最多上傳 ${maxFileCount} 個檔案。`, "error");
+          return;
+        }
+
+        const oversize = selectedFiles.find((file) => file.size > maxFileBytes);
         if (oversize) {
           setNotice(`${oversize.name} 超過 8MB 限制。`, "error");
           return;
@@ -803,14 +938,15 @@
             category: data.get("category"),
             subject: data.get("subject"),
             desiredOutcome: data.get("desiredOutcome"),
-            files: await Promise.all(files.map(filePayload)),
+            files: await Promise.all(selectedFiles.map(filePayload)),
           };
 
           google.script.run
             .withSuccessHandler((result) => {
               showLoading(false);
               form.reset();
-              fileList.innerHTML = "";
+              selectedFiles = [];
+              renderFileList();
               openSuccessModal(result.publicId, submittedEmail);
             })
             .withFailureHandler((error) => {
