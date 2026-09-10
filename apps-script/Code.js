@@ -19,6 +19,7 @@ const TAB_HEADERS = {
     "last_student_message_at",
     "last_staff_message_at",
     "closed_at",
+    "student_case_url",
   ],
   Messages: [
     "id",
@@ -91,7 +92,7 @@ function setupCampusVoice() {
       DRIVE_FOLDER_ID: rootFolder.getId(),
       SHARED_SECRET: sharedSecret,
     },
-    true,
+    false,
   );
   writeSettings_(ss, {
     SHEET_ID: ss.getId(),

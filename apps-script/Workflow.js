@@ -1,6 +1,7 @@
 function createCaseFromSubmission_(input) {
   validatePublicCaseInput_(input);
   const ss = getSpreadsheet_();
+  const appUrl = requireAppUrl_(ss);
   const rootFolder = getDriveFolder_();
   const now = nowIso_();
   const publicId = createPublicCaseId_();
@@ -15,6 +16,7 @@ function createCaseFromSubmission_(input) {
     public_id: publicId,
     token_hash: sha256Hex_(token),
     token_revoked_at: "",
+    student_case_url: `${appUrl}/case/${token}`,
     status: "pending",
     student_email: studentEmail,
     student_department: String(input.department || "").trim(),
@@ -105,7 +107,11 @@ function getCaseByToken_(ss, token) {
     (item) => item.token_hash === tokenHash && !item.token_revoked_at,
   );
   if (!match) return null;
-  return composeCase_(ss, match);
+  return {
+    case: match,
+    messages: readObjects_(ss, "Messages").filter((row) => row.case_id === match.id),
+    attachments: readObjects_(ss, "Attachments").filter((row) => row.case_id === match.id),
+  };
 }
 
 function getAdminCase_(ss, caseId) {
@@ -126,15 +132,32 @@ function composeCase_(ss, caseRow) {
 }
 
 function addStudentMessage_(ss, payload) {
-  const caseData = getCaseByToken_(ss, payload.token);
-  if (!caseData) throw new Error("案件連結無效。");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    return saveStudentMessage_(ss, payload);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function saveStudentMessage_(ss, payload) {
+  const tokenHash = sha256Hex_(payload.token || "");
+  const existing = findRow_(ss, "Cases", (row) => row.token_hash === tokenHash && !row.token_revoked_at);
+  if (!existing) throw new Error("案件連結無效。");
+  const caseData = { case: existing.object };
   const now = nowIso_();
   const caseId = caseData.case.id;
   const publicId = caseData.case.public_id;
-  const messageId = Utilities.getUuid();
+  const requestId = String(payload.requestId || "");
+  if (requestId && !/^[0-9a-f-]{36}$/i.test(requestId)) throw new Error("無效的送件識別碼。");
+  const messageId = requestId || Utilities.getUuid();
+  const savedMessage = readObjects_(ss, "Messages").find((row) => row.id === messageId && row.case_id === caseId);
+  if (savedMessage) return { ok: true };
 
   let bodyText = String(payload.body || "").trim();
   const files = payload.files || [];
+  if (files.length > 3) throw new Error("每次最多上傳 3 個檔案。");
 
   if (!bodyText && files.length === 0) {
     throw new Error("請填寫補充說明或選取要上傳的檔案。");
@@ -145,7 +168,11 @@ function addStudentMessage_(ss, payload) {
     const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
     const uploadedNames = [];
 
-    files.forEach((fileInput) => {
+    const savedAttachments = readObjects_(ss, "Attachments").filter((row) => row.message_id === messageId && row.case_id === caseId);
+    files.forEach((fileInput, index) => {
+      const attachmentId = `${messageId}-${index}`;
+      const saved = savedAttachments.find((row) => row.id === attachmentId);
+      if (saved) { uploadedNames.push(saved.file_name); return; }
       const bytes = Utilities.base64Decode(fileInput.data);
       if (bytes.length > 8 * 1024 * 1024) throw new Error(`${fileInput.name} 超過 8MB 限制。`);
       if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
@@ -154,7 +181,7 @@ function addStudentMessage_(ss, payload) {
       uploadedNames.push(file.getName());
 
       appendObject_(ss, "Attachments", {
-        id: Utilities.getUuid(),
+        id: attachmentId,
         case_id: caseId,
         message_id: messageId,
         drive_file_id: file.getId(),
@@ -172,6 +199,12 @@ function addStudentMessage_(ss, payload) {
     }
   }
 
+  updateObject_(ss, "Cases", existing.rowNumber, {
+    ...existing.object,
+    updated_at: now,
+    last_student_message_at: now,
+  });
+
   appendObject_(ss, "Messages", {
     id: messageId,
     case_id: caseId,
@@ -181,13 +214,6 @@ function addStudentMessage_(ss, payload) {
     body_text: bodyText,
     body_html: "",
     created_at: now,
-  });
-
-  const existing = findRow_(ss, "Cases", (row) => row.id === caseId);
-  updateObject_(ss, "Cases", existing.rowNumber, {
-    ...existing.object,
-    updated_at: now,
-    last_student_message_at: now,
   });
 
   notifyStaff_(
@@ -328,4 +354,28 @@ function shouldAutoClose_(item, now) {
   const lastStudent = item.last_student_message_at ? new Date(item.last_student_message_at) : null;
   if (lastStudent && lastStudent > lastStaff) return false;
   return now.getTime() - lastStaff.getTime() >= 14 * 24 * 60 * 60 * 1000;
+}
+
+// Run manually for a legacy case that has no stored link. Does not send email.
+// The previous token cannot be recovered from its hash; it is replaced once.
+function restoreStudentCaseLink(publicId) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const ss = getSpreadsheet_();
+    const existing = findRow_(ss, "Cases", (row) => row.public_id === publicId);
+    if (!existing) throw new Error("Case not found.");
+    if (existing.object.token_revoked_at) throw new Error("案件連結已停用。");
+    if (existing.object.student_case_url) return existing.object.student_case_url;
+    const token = createToken_();
+    const link = `${requireAppUrl_(ss)}/case/${token}`;
+    updateObject_(ss, "Cases", existing.rowNumber, {
+      ...existing.object,
+      token_hash: sha256Hex_(token),
+      student_case_url: link,
+    });
+    return link;
+  } finally {
+    lock.releaseLock();
+  }
 }

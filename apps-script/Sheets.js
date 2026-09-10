@@ -15,17 +15,23 @@ function getOrCreateSpreadsheet_() {
 
 function ensureSheet_(ss, name, headers) {
   const sheet = ss.getSheetByName(name) || ss.insertSheet(name);
-  const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  if (current.join("|") !== headers.join("|")) {
-    sheet.clear();
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    sheet.setFrozenRows(1);
+  const width = sheet.getLastColumn();
+  const current = width ? sheet.getRange(1, 1, 1, width).getValues()[0] : [];
+  // Only append columns: never clear existing case data during schema upgrades.
+  if (current.some((header, index) => header !== headers[index])) {
+    throw new Error(`Sheet ${name} 欄位順序不符，請先確認欄位；系統未更動既有資料。`);
   }
+  if (current.length < headers.length) {
+    sheet.getRange(1, current.length + 1, 1, headers.length - current.length)
+      .setValues([headers.slice(current.length)]);
+  }
+  if (!current.length) sheet.setFrozenRows(1);
   return sheet;
 }
 
 function readObjects_(ss, tabName) {
-  const sheet = ensureSheet_(ss, tabName, TAB_HEADERS[tabName]);
+  const sheet = ss.getSheetByName(tabName);
+  if (!sheet) return [];
   const values = sheet.getDataRange().getValues();
   if (values.length <= 1) return [];
   const headers = values[0];
