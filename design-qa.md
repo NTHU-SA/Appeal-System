@@ -22,7 +22,7 @@
 - Spacing: 20 px vertical padding yields a 64 px footer, within 3 px of the normalized source height.
 - Colors: existing `card` and `muted-foreground` tokens reproduce the white and gray treatment; the heart uses the project's red palette.
 - Assets: the heart is the existing Lucide icon, not a text glyph or improvised drawing.
-- Copy: `© 2026 34th 國立清華大學學生會 版權所有` and `Made with ♥ by NTHUSA IT Team` match the reference.
+- Copy: `© 2026 35th 國立清華大學學生會 版權所有` and `Made with ♥ by NTHUSA IT Team` match the reference.
 - Link: `NTHUSA IT Team` points to `https://github.com/nthu-sa` and opens in a new tab.
 
 ## Responsive and interaction checks
