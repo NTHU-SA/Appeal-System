@@ -20,11 +20,18 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ days?: string; q?: string }>;
 }) {
-  const staff = await requireStaff();
-  const params = await searchParams;
-  const days = Number(params.days || 30);
-  const query = params.q || "";
-  const data = await getDashboardData(days, query);
+  const staffPromise = requireStaff();
+  const dataPromise = searchParams.then(async (params) => {
+    const days = Number(params.days || 30);
+    const query = params.q || "";
+    const data = await getDashboardData(days, query);
+    return { days, query, data };
+  });
+
+  const [staff, { days, query, data }] = await Promise.all([
+    staffPromise,
+    dataPromise,
+  ]);
 
   return (
     <AppShell staff={staff}>

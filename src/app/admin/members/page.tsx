@@ -26,8 +26,10 @@ import {
 } from "@/components/ui/table";
 
 export default async function MembersPage() {
-  const staff = await requireMinister();
-  const members = await getMembers();
+  const [staff, members] = await Promise.all([
+    requireMinister(),
+    getMembers(),
+  ]);
 
   return (
     <AppShell staff={staff}>

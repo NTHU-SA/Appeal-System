@@ -16,6 +16,11 @@ export async function getCurrentStaff(): Promise<StaffSession | null> {
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
 
+  const cachedRole = staffRoleFromMemberRole(session?.user?.role);
+  if (cachedRole) {
+    return { id: email, email, role: cachedRole };
+  }
+
   try {
     const data = await callGas<{ role: UserRole | null }>("getMemberRole", {
       email,

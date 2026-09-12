@@ -16,9 +16,9 @@ export default async function AdminCasePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const staff = await requireStaff();
-  const { id } = await params;
-  const data = await getAdminCase(id);
+  const staffPromise = requireStaff();
+  const casePromise = params.then(({ id }) => getAdminCase(id));
+  const [staff, data] = await Promise.all([staffPromise, casePromise]);
   const ownDraft = data.drafts.find((draft) => draft.author_id === staff.id);
 
   return (
