@@ -121,3 +121,57 @@ describe("Apps Script transport recovery", () => {
   });
 });
 
+
+describe("Apps Script transport diagnostics", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("separates execution and result time without logging private data", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_WEB_APP_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SHARED_SECRET", "private-secret");
+    let now = 0;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const cancel = vi.fn();
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(async () => {
+        now += 1500;
+        return new Response(new ReadableStream({ cancel }), {
+          status: 302, headers: { location: "https://script.googleusercontent.com/macros/echo?result=private-result" },
+        });
+      })
+      .mockImplementationOnce(async () => {
+        expect(cancel).toHaveBeenCalledTimes(1);
+        now += 400;
+        return Response.json({ ok: true, data: { message: "private-message" } });
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    await callGas("getCaseByToken", { token: "private-token" });
+    expect(log).toHaveBeenCalledWith("Apps Script request completed", {
+      action: "getCaseByToken", attempt: 1, executeMs: 1500, resultMs: 400, totalMs: 1900,
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/private-|https:/);
+  });
+
+  it("identifies result URL failures and releases failed responses before retrying", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_WEB_APP_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SHARED_SECRET", "secret");
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const cancel = vi.fn();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "https://script.googleusercontent.com/macros/echo" } }))
+      .mockResolvedValueOnce(new Response(new ReadableStream({ cancel }), { status: 404 }))
+      .mockImplementationOnce(async () => {
+        expect(cancel).toHaveBeenCalledTimes(1);
+        return Response.json({ ok: true, data: null });
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    await callGas("getCaseByToken", {}, { backoffMs: 0 });
+    expect(log).toHaveBeenCalledWith("Apps Script transport failure", expect.objectContaining({
+      action: "getCaseByToken", phase: "read-result", attempt: 1, status: 404,
+    }));
+  });
+});

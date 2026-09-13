@@ -42,7 +42,7 @@ export async function callGas<T>(
   const backoffMs = options?.backoffMs ?? 800;
   for (let attempt = 0; ; attempt++) {
     try {
-      return await requestGas<T>(action, payload);
+      return await requestGas<T>(action, payload, attempt + 1);
     } catch (error) {
       if (!(error instanceof GasTransportError) || !retryable || attempt >= 1) throw error;
       if (backoffMs > 0) {
@@ -55,7 +55,8 @@ export async function callGas<T>(
 
 async function requestGas<T>(
   action: GasAction,
-  payload: Record<string, unknown> = {}
+  payload: Record<string, unknown> = {},
+  attempt = 1
 ): Promise<T> {
   const url = process.env.GOOGLE_APPS_SCRIPT_WEB_APP_URL;
   const secret = process.env.GOOGLE_APPS_SCRIPT_SHARED_SECRET;
@@ -66,6 +67,8 @@ async function requestGas<T>(
     );
   }
 
+  const startedAt = Date.now();
+  let executeMs = 0;
   const signal = AbortSignal.timeout(30_000);
   let response: Response;
   let phase = "execute";
@@ -85,10 +88,13 @@ async function requestGas<T>(
       }),
     });
 
+    executeMs = Date.now() - startedAt;
+
     // ContentService returns a one-time result URL after executing doPost.
     // Follow as GET, without forwarding the shared secret across origins.
     for (let hop = 0; [301, 302, 303, 307, 308].includes(response.status) && hop < 5; hop++) {
       const location = response.headers.get("location");
+      await response.body?.cancel().catch(() => {});
       const destination = location ? new URL(location) : null;
       if (!destination || destination.protocol !== "https:" ||
           !["script.googleusercontent.com", "script.google.com"].includes(destination.hostname)) {
@@ -101,7 +107,7 @@ async function requestGas<T>(
     }
   } catch (error) {
     console.error("Apps Script fetch failure", {
-      action, phase,
+      action, phase, attempt, executeMs, totalMs: Date.now() - startedAt,
       reason: error instanceof Error ? error.message.replace(/https?:\/\/[^\s]+/g, "[URL]") : "unknown",
     });
     if (error instanceof TypeError || (error instanceof Error &&
@@ -112,7 +118,11 @@ async function requestGas<T>(
   }
 
   if (!response.ok) {
-    console.error("Apps Script transport failure", { action, status: response.status });
+    await response.body?.cancel().catch(() => {});
+    console.error("Apps Script transport failure", {
+      action, phase, attempt, status: response.status, executeMs,
+      totalMs: Date.now() - startedAt,
+    });
     throw new GasTransportError(`案件服務暫時無法確認結果（${response.status}），請稍後重試。`);
   }
 
@@ -120,6 +130,9 @@ async function requestGas<T>(
   try {
     result = (await response.json()) as GasResponse<T>;
   } catch {
+    console.error("Apps Script response failure", {
+      action, phase, attempt, executeMs, totalMs: Date.now() - startedAt,
+    });
     throw new GasTransportError("案件服務回應異常，請稍後重試。");
   }
 
@@ -127,5 +140,10 @@ async function requestGas<T>(
     throw new Error(result.error || "Google Apps Script request failed.");
   }
 
+  const totalMs = Date.now() - startedAt;
+  // Do not log payloads, case tokens, result URLs, or response bodies.
+  console.info("Apps Script request completed", {
+    action, attempt, executeMs, resultMs: totalMs - executeMs, totalMs,
+  });
   return result.data;
 }
