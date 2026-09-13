@@ -241,3 +241,71 @@ describe("student supplement persistence", () => {
     expect(addFileViewer).toHaveBeenCalledWith("test@example.com");
   });
 });
+
+describe("Apps Script performance optimizations", () => {
+  it("caches script properties in memory without redundant RPC calls", () => {
+    const getProperties = vi.fn(() => ({
+      SHARED_SECRET: "secret-abc",
+      SHEET_ID: "sheet-xyz",
+      DRIVE_FOLDER_ID: "drive-123",
+    }));
+    const ctx = runtime({
+      PropertiesService: {
+        getScriptProperties: () => ({ getProperties }),
+      },
+    });
+
+    expect(ctx.getScriptProp_("SHARED_SECRET")).toBe("secret-abc");
+    expect(ctx.getScriptProp_("SHEET_ID")).toBe("sheet-xyz");
+    expect(ctx.getScriptProp_("DRIVE_FOLDER_ID")).toBe("drive-123");
+    // All three accesses should only invoke getProperties once!
+    expect(getProperties).toHaveBeenCalledTimes(1);
+
+    // After clearing cache, next call fetches again
+    ctx.clearScriptPropsCache_();
+    expect(ctx.getScriptProp_("SHARED_SECRET")).toBe("secret-abc");
+    expect(getProperties).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads bounded sheet ranges and applies predicate filtering", () => {
+    const ctx = runtime();
+    const rows = [
+      ["id", "case_id", "body_text"],
+      ["msg-1", "case-A", "message 1"],
+      ["msg-2", "case-B", "message 2"],
+      ["msg-3", "case-A", "message 3"],
+    ];
+    const getRange = vi.fn(() => ({
+      getValues: () => rows,
+    }));
+
+    const sheet = {
+      getLastRow: () => 4,
+      getLastColumn: () => 3,
+      getRange,
+    };
+    const ss = { getSheetByName: () => sheet };
+
+    const filtered = ctx.readObjects_(ss, "Messages", ctx.byCaseIdFilter_("case-A"));
+    expect(getRange).toHaveBeenCalledWith(1, 1, 4, 3);
+    expect(filtered).toHaveLength(2);
+    expect(filtered[0].id).toBe("msg-1");
+    expect(filtered[1].id).toBe("msg-3");
+  });
+
+  it("returns empty array without calling getRange when sheet is empty or only has headers", () => {
+    const ctx = runtime();
+    const getRange = vi.fn();
+    const sheet = {
+      getLastRow: () => 1,
+      getLastColumn: () => 3,
+      getRange,
+    };
+    const ss = { getSheetByName: () => sheet };
+
+    const results = ctx.readObjects_(ss, "Messages");
+    expect(results).toEqual([]);
+    expect(getRange).not.toHaveBeenCalled();
+  });
+});
+

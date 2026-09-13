@@ -1,7 +1,42 @@
+var scriptPropsCache_ = null;
+
+function getScriptProps_() {
+  if (!scriptPropsCache_) {
+    if (typeof PropertiesService !== "undefined" && PropertiesService.getScriptProperties) {
+      const scriptProps = PropertiesService.getScriptProperties();
+      if (typeof scriptProps.getProperties === "function") {
+        scriptPropsCache_ = scriptProps.getProperties() || {};
+      } else {
+        scriptPropsCache_ = null;
+      }
+    } else {
+      scriptPropsCache_ = {};
+    }
+  }
+  return scriptPropsCache_;
+}
+
+function getScriptProp_(key) {
+  const cache = getScriptProps_();
+  if (cache && typeof cache[key] !== "undefined") return cache[key];
+  if (typeof PropertiesService !== "undefined" && PropertiesService.getScriptProperties) {
+    const scriptProps = PropertiesService.getScriptProperties();
+    if (typeof scriptProps.getProperty === "function") {
+      return scriptProps.getProperty(key);
+    }
+  }
+  return undefined;
+}
+
+function clearScriptPropsCache_() {
+  scriptPropsCache_ = null;
+}
+
 function assertSecret_(secret) {
-  const expected = PropertiesService.getScriptProperties().getProperty("SHARED_SECRET");
+  const expected = getScriptProp_("SHARED_SECRET");
   if (!expected || secret !== expected) throw new Error("Unauthorized.");
 }
+
 
 function json_(body) {
   return ContentService.createTextOutput(JSON.stringify(body)).setMimeType(

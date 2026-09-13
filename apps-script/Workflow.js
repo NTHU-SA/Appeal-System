@@ -105,16 +105,28 @@ function listCases_(ss, payload) {
   return { cases: cases.slice(0, 100), total: cases.length };
 }
 
+function byCaseIdFilter_(caseId) {
+  let colIndex = -1;
+  return function (row, headers) {
+    if (colIndex === -1) colIndex = headers.indexOf("case_id");
+    return colIndex !== -1 && row[colIndex] === caseId;
+  };
+}
+
 function getCaseByToken_(ss, token) {
   const tokenHash = sha256Hex_(token || "");
   const match = readObjects_(ss, "Cases").find(
     (item) => item.token_hash === tokenHash && !item.token_revoked_at,
   );
   if (!match) return null;
+  const caseId = match.id;
+  const byCase = byCaseIdFilter_(caseId);
+  const messages = readObjects_(ss, "Messages", byCase);
+  const attachments = readObjects_(ss, "Attachments", byCase);
   return {
     case: match,
-    messages: readObjects_(ss, "Messages").filter((row) => row.case_id === match.id),
-    attachments: readObjects_(ss, "Attachments").filter((row) => row.case_id === match.id),
+    messages: messages.filter((row) => row.case_id === caseId),
+    attachments: attachments.filter((row) => row.case_id === caseId),
   };
 }
 
@@ -126,14 +138,20 @@ function getAdminCase_(ss, caseId) {
 
 function composeCase_(ss, caseRow) {
   const caseId = caseRow.id;
+  const byCase = byCaseIdFilter_(caseId);
+  const messages = readObjects_(ss, "Messages", byCase);
+  const attachments = readObjects_(ss, "Attachments", byCase);
+  const drafts = readObjects_(ss, "DraftReplies", byCase);
+  const reviews = readObjects_(ss, "ReviewRequests", byCase);
   return {
     case: caseRow,
-    messages: readObjects_(ss, "Messages").filter((row) => row.case_id === caseId),
-    attachments: readObjects_(ss, "Attachments").filter((row) => row.case_id === caseId),
-    drafts: readObjects_(ss, "DraftReplies").filter((row) => row.case_id === caseId),
-    reviews: readObjects_(ss, "ReviewRequests").filter((row) => row.case_id === caseId),
+    messages: messages.filter((row) => row.case_id === caseId),
+    attachments: attachments.filter((row) => row.case_id === caseId),
+    drafts: drafts.filter((row) => row.case_id === caseId),
+    reviews: reviews.filter((row) => row.case_id === caseId),
   };
 }
+
 
 function addStudentMessage_(ss, payload) {
   const lock = LockService.getScriptLock();
@@ -156,7 +174,8 @@ function saveStudentMessage_(ss, payload) {
   const requestId = String(payload.requestId || "");
   if (requestId && !/^[0-9a-f-]{36}$/i.test(requestId)) throw new Error("無效的送件識別碼。");
   const messageId = requestId || Utilities.getUuid();
-  const savedMessage = readObjects_(ss, "Messages").find((row) => row.id === messageId && row.case_id === caseId);
+  const byCase = byCaseIdFilter_(caseId);
+  const savedMessage = readObjects_(ss, "Messages", byCase).find((row) => row.id === messageId && row.case_id === caseId);
   if (savedMessage) return { ok: true };
 
   let bodyText = String(payload.body || "").trim();
@@ -173,7 +192,8 @@ function saveStudentMessage_(ss, payload) {
     grantViewerAccessSafe_(caseFolder, caseData.case.student_email);
     const uploadedNames = [];
 
-    const savedAttachments = readObjects_(ss, "Attachments").filter((row) => row.message_id === messageId && row.case_id === caseId);
+    const savedAttachments = readObjects_(ss, "Attachments", byCase).filter((row) => row.message_id === messageId && row.case_id === caseId);
+
     files.forEach((fileInput, index) => {
       const attachmentId = `${messageId}-${index}`;
       const saved = savedAttachments.find((row) => row.id === attachmentId);

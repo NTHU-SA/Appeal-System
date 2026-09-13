@@ -7,10 +7,11 @@ function getOrCreateDriveFolder_(props) {
 }
 
 function getDriveFolder_() {
-  const id = PropertiesService.getScriptProperties().getProperty("DRIVE_FOLDER_ID");
+  const id = typeof getScriptProp_ === "function" ? getScriptProp_("DRIVE_FOLDER_ID") : (typeof PropertiesService !== "undefined" ? PropertiesService.getScriptProperties().getProperty("DRIVE_FOLDER_ID") : null);
   if (!id) throw new Error("Missing DRIVE_FOLDER_ID. Run setupCampusVoice() first.");
   return DriveApp.getFolderById(id);
 }
+
 
 function getOrCreateSubFolder_(parent, name) {
   const folders = parent.getFoldersByName(name);

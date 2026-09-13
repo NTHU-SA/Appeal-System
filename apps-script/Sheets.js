@@ -1,15 +1,15 @@
 function getSpreadsheet_() {
-  const id = PropertiesService.getScriptProperties().getProperty("SHEET_ID");
+  const id = typeof getScriptProp_ === "function" ? getScriptProp_("SHEET_ID") : (typeof PropertiesService !== "undefined" ? PropertiesService.getScriptProperties().getProperty("SHEET_ID") : null);
   if (!id) throw new Error("Missing SHEET_ID. Run setupCampusVoice() first.");
   return SpreadsheetApp.openById(id);
 }
 
 function getOrCreateSpreadsheet_() {
-  const props = PropertiesService.getScriptProperties();
-  const id = props.getProperty("SHEET_ID");
+  const id = typeof getScriptProp_ === "function" ? getScriptProp_("SHEET_ID") : (typeof PropertiesService !== "undefined" ? PropertiesService.getScriptProperties().getProperty("SHEET_ID") : null);
   if (id) return SpreadsheetApp.openById(id);
   const ss = SpreadsheetApp.create(`${APP_TITLE} Data`);
-  props.setProperty("SHEET_ID", ss.getId());
+  PropertiesService.getScriptProperties().setProperty("SHEET_ID", ss.getId());
+  if (typeof clearScriptPropsCache_ === "function") clearScriptPropsCache_();
   return ss;
 }
 
@@ -29,20 +29,43 @@ function ensureSheet_(ss, name, headers) {
   return sheet;
 }
 
-function readObjects_(ss, tabName) {
+function getSheetRows_(sheet) {
+  if (!sheet) return [];
+  if (typeof sheet.getLastRow === "function" && typeof sheet.getLastColumn === "function") {
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow <= 1 || lastCol < 1) return [];
+    if (typeof sheet.getRange === "function") {
+      return sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    }
+  }
+  if (typeof sheet.getDataRange === "function") {
+    return sheet.getDataRange().getValues();
+  }
+  return [];
+}
+
+function readObjects_(ss, tabName, predicate) {
   const sheet = ss.getSheetByName(tabName);
   if (!sheet) return [];
-  const values = sheet.getDataRange().getValues();
+  const values = getSheetRows_(sheet);
   if (values.length <= 1) return [];
   const headers = values[0];
-  return values.slice(1).filter((row) => row.some(Boolean)).map((row) => {
+  const results = [];
+  const rows = values.slice(1);
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row.some(Boolean)) continue;
+    if (predicate && !predicate(row, headers)) continue;
     const obj = {};
     headers.forEach((header, index) => {
       obj[header] = normalizeCell_(row[index]);
     });
-    return obj;
-  });
+    results.push(obj);
+  }
+  return results;
 }
+
 
 function appendObject_(ss, tabName, object) {
   const sheet = ensureSheet_(ss, tabName, TAB_HEADERS[tabName]);
