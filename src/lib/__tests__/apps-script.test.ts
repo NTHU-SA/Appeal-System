@@ -151,10 +151,10 @@ describe("student supplement persistence", () => {
   it("does not read staff drafts or review sheets on the public page", () => {
     const ctx = runtime();
     ctx.sha256Hex_ = () => "hash";
-    ctx.readObjects_ = vi.fn((_ss, tab) => tab === "Cases" ? [{id: "case", token_hash: "hash"}] : []);
+    ctx.readObjectsByColumn_ = vi.fn((_ss, tab) => tab === "Cases" ? [{id: "case", token_hash: "hash"}] : []);
     const data = ctx.getCaseByToken_({}, "token");
     expect(data).not.toHaveProperty("drafts");
-    expect(ctx.readObjects_.mock.calls.map((call: unknown[]) => call[1])).toEqual(["Cases", "Messages", "Attachments"]);
+    expect(ctx.readObjectsByColumn_.mock.calls.map((call: unknown[]) => call[1])).toEqual(["Cases", "Messages", "Attachments"]);
   });
 
   it("grants complainant viewer access to folder on submission without per-file sharing", () => {
@@ -298,3 +298,58 @@ describe("Apps Script performance optimizations", () => {
   });
 });
 
+
+
+describe("targeted case sheet reads", () => {
+  function fixture(count: number, matchingRows: number[]) {
+    const ctx = runtime();
+    const headers = vm.runInContext("TAB_HEADERS.Messages", ctx) as string[];
+    const values = Array.from({ length: count }, (_, index) => headers.map((header) =>
+      header === "id" ? `message-${index + 2}` : header === "case_id"
+        ? (matchingRows.includes(index + 2) ? "target" : "other") : ""));
+    const getRange = vi.fn((row: number, column: number, height: number, width: number) => ({
+      getValues: () => values.slice(row - 2, row - 2 + height)
+        .map((cells) => cells.slice(column - 1, column - 1 + width)),
+    }));
+    const ss = { getSheetByName: () => ({ getLastRow: () => count + 1, getRange }) };
+    return { ctx, ss, getRange, headers };
+  }
+
+  it("reads only matching contiguous runs from a large history in sheet order", () => {
+    const { ctx, ss, getRange, headers } = fixture(10000, [3, 4, 9000]);
+    const result = ctx.readObjectsByColumn_(ss, "Messages", "case_id", "target");
+    expect(result.map((row: { id: string }) => row.id)).toEqual(["message-3", "message-4", "message-9000"]);
+    expect(getRange.mock.calls).toEqual([
+      [2, headers.indexOf("case_id") + 1, 10000, 1],
+      [3, 1, 2, headers.length], [9000, 1, 1, headers.length],
+    ]);
+  });
+
+  it("uses a single read for small sheets", () => {
+    const { ctx, ss, getRange } = fixture(10, [3]);
+    expect(ctx.readObjectsByColumn_(ss, "Messages", "case_id", "target")).toHaveLength(1);
+    expect(getRange).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not read row bodies for missing keys", () => {
+    const { ctx, ss, getRange } = fixture(10000, []);
+    expect(ctx.readObjectsByColumn_(ss, "Messages", "case_id", "target")).toEqual([]);
+    expect(getRange).toHaveBeenCalledTimes(1);
+  });
+
+  it("bounds round trips for fragmented histories", () => {
+    const { ctx, ss, getRange } = fixture(10000, [2, 4, 6, 8, 10, 12, 14, 16, 18]);
+    expect(ctx.readObjectsByColumn_(ss, "Messages", "case_id", "target")).toHaveLength(9);
+    expect(getRange).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects revoked and unknown tokens before reading conversations", () => {
+    const ctx = runtime();
+    ctx.sha256Hex_ = () => "hash";
+    ctx.readObjectsByColumn_ = vi.fn(() => [{ token_revoked_at: "2026-09-13" }]);
+    expect(ctx.getCaseByToken_({}, "token")).toBeNull();
+    expect(ctx.readObjectsByColumn_).toHaveBeenCalledTimes(1);
+    ctx.readObjectsByColumn_.mockReturnValue([]);
+    expect(ctx.getCaseByToken_({}, "unknown")).toBeNull();
+  });
+});

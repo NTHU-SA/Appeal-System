@@ -114,18 +114,15 @@ function byCaseIdFilter_(caseId) {
 
 function getCaseByToken_(ss, token) {
   const tokenHash = sha256Hex_(token || "");
-  const match = readObjects_(ss, "Cases").find(
-    (item) => item.token_hash === tokenHash && !item.token_revoked_at,
+  const match = readObjectsByColumn_(ss, "Cases", "token_hash", tokenHash).find(
+    (item) => !item.token_revoked_at,
   );
   if (!match) return null;
   const caseId = match.id;
-  const byCase = byCaseIdFilter_(caseId);
-  const messages = readObjects_(ss, "Messages", byCase);
-  const attachments = readObjects_(ss, "Attachments", byCase);
   return {
     case: match,
-    messages: messages.filter((row) => row.case_id === caseId),
-    attachments: attachments.filter((row) => row.case_id === caseId),
+    messages: readObjectsByColumn_(ss, "Messages", "case_id", caseId),
+    attachments: readObjectsByColumn_(ss, "Attachments", "case_id", caseId),
   };
 }
 

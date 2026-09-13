@@ -67,6 +67,45 @@ function readObjects_(ss, tabName, predicate) {
 }
 
 
+// Scan only the lookup column, then read matching rows in contiguous runs.
+// Small sheets use one bulk read to avoid extra round trips.
+function readObjectsByColumn_(ss, tabName, column, value) {
+  const sheet = ss.getSheetByName(tabName);
+  if (!sheet) return [];
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  const headers = TAB_HEADERS[tabName];
+  const columnIndex = headers.indexOf(column);
+  if (columnIndex < 0) throw new Error(`Unknown lookup column: ${column}`);
+  const toObjects = (rows) => rows.map((row) => {
+    const object = {};
+    headers.forEach((header, index) => { object[header] = normalizeCell_(row[index]); });
+    return object;
+  });
+  if (lastRow <= 201) {
+    return toObjects(sheet.getRange(2, 1, lastRow - 1, headers.length).getValues()
+      .filter((row) => row[columnIndex] === value));
+  }
+  const keys = sheet.getRange(2, columnIndex + 1, lastRow - 1, 1).getValues();
+  const runs = [];
+  keys.forEach((row, index) => {
+    if (row[0] !== value) return;
+    const rowNumber = index + 2;
+    const previous = runs[runs.length - 1];
+    if (previous && previous.start + previous.count === rowNumber) previous.count++;
+    else runs.push({ start: rowNumber, count: 1 });
+  });
+  // Highly fragmented histories are cheaper to fetch in one bulk read.
+  if (runs.length > 8) {
+    return toObjects(sheet.getRange(2, 1, lastRow - 1, headers.length).getValues()
+      .filter((row) => row[columnIndex] === value));
+  }
+  return runs.flatMap((run) => toObjects(
+    sheet.getRange(run.start, 1, run.count, headers.length).getValues(),
+  ));
+}
+
+
 function appendObject_(ss, tabName, object) {
   const sheet = ensureSheet_(ss, tabName, TAB_HEADERS[tabName]);
   sheet.appendRow(TAB_HEADERS[tabName].map((key) => serializeCell_(object[key])));
