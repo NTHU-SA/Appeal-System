@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ExternalLink, FileText, ImageIcon, MessageSquare, Paperclip } from "lucide-react";
 
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function CaseStatusPage({
   params,
@@ -17,11 +19,8 @@ export default async function CaseStatusPage({
 }) {
   const { token } = await params;
 
-  const data = await getCaseByToken(token);
-
-  if (!data) notFound();
-
-  const { case: caseRow, messages, attachments } = data;
+  // Start one shared request without blocking the reply form.
+  const data = getCaseByToken(token);
 
   return (
     <main className="mx-auto flex-1 w-full max-w-4xl px-4 py-8 sm:px-6">
@@ -29,30 +28,9 @@ export default async function CaseStatusPage({
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           國立清華大學學生會 · 學生申訴協力系統
         </p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-mono text-2xl font-bold tracking-tight sm:text-3xl">
-              {caseRow.public_id}
-            </h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              送件時間：{formatDateTime(caseRow.created_at)}
-            </p>
-          </div>
-          <Badge
-            variant={
-              caseRow.status === "in_progress"
-                ? "default"
-                : caseRow.status === "closed"
-                  ? "secondary"
-                  : caseRow.status === "rejected"
-                    ? "destructive"
-                    : "outline"
-            }
-            className="w-fit text-sm px-3 py-1 font-semibold"
-          >
-            {statusLabels[caseRow.status]}
-          </Badge>
-        </div>
+        <Suspense fallback={<CaseDataLoading />}>
+          <CaseHeading data={data} />
+        </Suspense>
       </div>
 
       <nav aria-label="案件操作" className="mb-6 flex flex-wrap gap-2">
@@ -60,22 +38,9 @@ export default async function CaseStatusPage({
         <Button asChild variant="outline"><a href="#conversation"><MessageSquare className="h-4 w-4" />查看回覆</a></Button>
       </nav>
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
-        <Card className="shadow-xs">
-          <CardHeader>
-            <CardTitle className="text-lg">案件摘要</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="grid grid-cols-2 gap-4">
-              <Info label="申訴人" value={caseRow.student_name} />
-              <Info label="年級" value={caseRow.student_department} />
-            </div>
-            <Info label="申訴種類" value={caseRow.category} />
-            <Separator />
-            <Info label="申訴問題" value={caseRow.subject} multiline />
-            <Separator />
-            <Info label="希望得到的處理方式" value={caseRow.desired_outcome} multiline />
-          </CardContent>
-        </Card>
+        <Suspense fallback={<CaseDataLoading />}>
+          <CaseSummary data={data} />
+        </Suspense>
 
         <Card id="reply" className="order-first scroll-mt-6 shadow-xs lg:order-last">
           <CardHeader>
@@ -87,75 +52,152 @@ export default async function CaseStatusPage({
         </Card>
       </div>
 
-      <Card id="conversation" className="mt-6 scroll-mt-6 shadow-xs">
-        <CardHeader>
-          <CardTitle className="text-lg">對話紀錄</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            {messages.map((message) => {
-              const isStudent = message.author_type === "student";
-              return (
-                <div
-                  key={message.id}
-                  className={`rounded-lg border p-4 transition ${
-                    isStudent
-                      ? "border-primary/20 bg-primary/5"
-                      : "border-muted bg-card shadow-2xs"
-                  }`}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-                    <span className="font-semibold text-foreground">
-                      {isStudent ? "你" : "學權幹部"}
-                    </span>
-                    <time className="text-muted-foreground">{formatDateTime(message.created_at)}</time>
-                  </div>
-                  {message.body_html ? (
-                    <div
-                      className="prose prose-sm max-w-none dark:prose-invert"
-                      dangerouslySetInnerHTML={{ __html: message.body_html }}
-                    />
-                  ) : (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                      {message.body_text}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {attachments.length ? (
-            <div className="space-y-3 pt-2">
-              <h2 className="text-sm font-semibold text-foreground">
-                案件附件 ({attachments.length})
-              </h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {attachments.map((attachment) => (
-                  <a
-                    key={attachment.id}
-                    href={attachment.drive_url || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-sm transition hover:border-primary/40 hover:bg-muted/40"
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {attachment.file_type?.startsWith("image/") ? (
-                        <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
-                      ) : (
-                        <FileText className="h-4 w-4 shrink-0 text-amber-500" />
-                      )}
-                      <span className="truncate font-medium">{attachment.file_name}</span>
-                    </div>
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div id="conversation" className="mt-6 scroll-mt-6"><CaseDataLoading /></div>}>
+        <CaseConversation data={data} />
+      </Suspense>
     </main>
+  );
+}
+
+type CaseDataProps = { data: ReturnType<typeof getCaseByToken> };
+
+async function requireCase(data: CaseDataProps["data"]) {
+  const result = await data;
+  if (!result) notFound();
+  return result;
+}
+
+function CaseDataLoading() {
+  return <div role="status" aria-busy="true" className="space-y-3 rounded-lg border p-6">
+    <p className="text-sm text-muted-foreground">正在載入案件資料，您可以先填寫留言與補件。</p>
+    <Skeleton className="h-6 w-48" />
+    <Skeleton className="h-16 w-full" />
+  </div>;
+}
+
+async function CaseHeading({ data }: CaseDataProps) {
+  const { case: caseRow } = await requireCase(data);
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="font-mono text-2xl font-bold tracking-tight sm:text-3xl">
+          {caseRow.public_id}
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          送件時間：{formatDateTime(caseRow.created_at)}
+        </p>
+      </div>
+      <Badge
+        variant={
+          caseRow.status === "in_progress"
+            ? "default"
+            : caseRow.status === "closed"
+              ? "secondary"
+              : caseRow.status === "rejected"
+                ? "destructive"
+                : "outline"
+        }
+        className="w-fit text-sm px-3 py-1 font-semibold"
+      >
+        {statusLabels[caseRow.status]}
+      </Badge>
+    </div>
+  );
+}
+
+async function CaseSummary({ data }: CaseDataProps) {
+  const { case: caseRow } = await requireCase(data);
+  return (
+    <Card className="shadow-xs">
+      <CardHeader>
+        <CardTitle className="text-lg">案件摘要</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div className="grid grid-cols-2 gap-4">
+          <Info label="申訴人" value={caseRow.student_name} />
+          <Info label="年級" value={caseRow.student_department} />
+        </div>
+        <Info label="申訴種類" value={caseRow.category} />
+        <Separator />
+        <Info label="申訴問題" value={caseRow.subject} multiline />
+        <Separator />
+        <Info label="希望得到的處理方式" value={caseRow.desired_outcome} multiline />
+      </CardContent>
+    </Card>
+  );
+}
+
+async function CaseConversation({ data }: CaseDataProps) {
+  const { messages, attachments } = await requireCase(data);
+  return (
+    <Card id="conversation" className="mt-6 scroll-mt-6 shadow-xs">
+      <CardHeader>
+        <CardTitle className="text-lg">對話紀錄</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          {messages.map((message) => {
+            const isStudent = message.author_type === "student";
+            return (
+              <div
+                key={message.id}
+                className={`rounded-lg border p-4 transition ${
+                  isStudent
+                    ? "border-primary/20 bg-primary/5"
+                    : "border-muted bg-card shadow-2xs"
+                }`}
+              >
+                <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                  <span className="font-semibold text-foreground">
+                    {isStudent ? "你" : "學權幹部"}
+                  </span>
+                  <time className="text-muted-foreground">{formatDateTime(message.created_at)}</time>
+                </div>
+                {message.body_html ? (
+                  <div
+                    className="prose prose-sm max-w-none dark:prose-invert"
+                    dangerouslySetInnerHTML={{ __html: message.body_html }}
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    {message.body_text}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {attachments.length ? (
+          <div className="space-y-3 pt-2">
+            <h2 className="text-sm font-semibold text-foreground">
+              案件附件 ({attachments.length})
+            </h2>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {attachments.map((attachment) => (
+                <a
+                  key={attachment.id}
+                  href={attachment.drive_url || "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-sm transition hover:border-primary/40 hover:bg-muted/40"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    {attachment.file_type?.startsWith("image/") ? (
+                      <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                    ) : (
+                      <FileText className="h-4 w-4 shrink-0 text-amber-500" />
+                    )}
+                    <span className="truncate font-medium">{attachment.file_name}</span>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
