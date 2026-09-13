@@ -54,7 +54,6 @@ function createCaseFromSubmission_(input) {
     if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
     const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
     const file = caseFolder.createFile(blob);
-    grantViewerAccessSafe_(file, studentEmail);
     appendObject_(ss, "Attachments", {
       id: Utilities.getUuid(),
       case_id: caseId,
@@ -203,7 +202,6 @@ function saveStudentMessage_(ss, payload) {
       if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
       const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
       const file = caseFolder.createFile(blob);
-      grantViewerAccessSafe_(file, caseData.case.student_email);
       uploadedNames.push(file.getName());
 
       appendObject_(ss, "Attachments", {
@@ -406,7 +404,7 @@ function restoreStudentCaseLink(publicId) {
   }
 }
 
-// Run manually in the Apps Script editor to grant complainant access to a case folder and its attachments.
+// Run manually in the Apps Script editor to grant complainant access to a case folder.
 function grantCaseDrivePermissions(publicId) {
   const ss = getSpreadsheet_();
   const match = readObjects_(ss, "Cases").find(
@@ -421,12 +419,5 @@ function grantCaseDrivePermissions(publicId) {
   const folder = folders.next();
   grantViewerAccessSafe_(folder, match.student_email);
 
-  const files = folder.getFiles();
-  let count = 0;
-  while (files.hasNext()) {
-    const file = files.next();
-    grantViewerAccessSafe_(file, match.student_email);
-    count++;
-  }
-  return { ok: true, fileCount: count };
+  return { ok: true };
 }

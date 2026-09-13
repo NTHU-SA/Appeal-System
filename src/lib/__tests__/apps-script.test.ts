@@ -157,7 +157,7 @@ describe("student supplement persistence", () => {
     expect(ctx.readObjects_.mock.calls.map((call: unknown[]) => call[1])).toEqual(["Cases", "Messages", "Attachments"]);
   });
 
-  it("grants complainant viewer access to folder and uploaded files on submission", () => {
+  it("grants complainant viewer access to folder on submission without per-file sharing", () => {
     const addFolderViewer = vi.fn();
     const addFileViewer = vi.fn();
     const file = {
@@ -200,23 +200,13 @@ describe("student supplement persistence", () => {
     });
 
     expect(addFolderViewer).toHaveBeenCalledWith("student@example.com");
-    expect(addFileViewer).toHaveBeenCalledWith("student@example.com");
+    expect(addFileViewer).not.toHaveBeenCalled();
   });
 
-  it("grants complainant viewer access to folder and files in grantCaseDrivePermissions", () => {
+  it("grants complainant viewer access to folder in grantCaseDrivePermissions", () => {
     const addFolderViewer = vi.fn();
-    const addFileViewer = vi.fn();
-    const mockFile = { addViewer: addFileViewer };
-    let fileIterDone = false;
     const folder = {
       addViewer: addFolderViewer,
-      getFiles: () => ({
-        hasNext: () => !fileIterDone,
-        next: () => {
-          fileIterDone = true;
-          return mockFile;
-        },
-      }),
     };
     let folderIterDone = false;
     const rootFolder = {
@@ -236,9 +226,8 @@ describe("student supplement persistence", () => {
     ctx.getDriveFolder_ = () => rootFolder;
 
     const result = ctx.grantCaseDrivePermissions("CV-1234");
-    expect(result).toEqual({ ok: true, fileCount: 1 });
+    expect(result).toEqual({ ok: true });
     expect(addFolderViewer).toHaveBeenCalledWith("test@example.com");
-    expect(addFileViewer).toHaveBeenCalledWith("test@example.com");
   });
 });
 
