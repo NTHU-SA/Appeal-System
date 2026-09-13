@@ -82,3 +82,42 @@ describe("case-cache", () => {
     expect(fetcher).toHaveBeenCalledTimes(4);
   });
 });
+
+
+describe("case cache request races", () => {
+  afterEach(() => invalidateCaseCache());
+
+  it.each(["key", undefined])("does not restore stale data after invalidation (%s)", async (key) => {
+    let resolveOld!: (value: string) => void;
+    const old = getCachedCaseData("key", () => new Promise<string>((resolve) => { resolveOld = resolve; }));
+    invalidateCaseCache(key);
+    await getCachedCaseData("key", async () => "new");
+    resolveOld("old");
+    expect(await old).toBe("old");
+    expect(await getCachedCaseData("key", async () => "unexpected")).toBe("new");
+  });
+
+  it("keeps the newer request coalesced when an invalidated request completes", async () => {
+    let resolveOld!: (value: string) => void;
+    let resolveNew!: (value: string) => void;
+    const old = getCachedCaseData("race", () => new Promise<string>((resolve) => { resolveOld = resolve; }));
+    invalidateCaseCache("race");
+    const fresh = getCachedCaseData("race", () => new Promise<string>((resolve) => { resolveNew = resolve; }));
+    resolveOld("old");
+    await old;
+    const extraFetch = vi.fn(async () => "unexpected");
+    const concurrent = getCachedCaseData("race", extraFetch);
+    expect(extraFetch).not.toHaveBeenCalled();
+    resolveNew("new");
+    expect(await Promise.all([fresh, concurrent])).toEqual(["new", "new"]);
+  });
+
+  it.each([true, false])("retries after a failed fetch (synchronous: %s)", async (synchronous) => {
+    const fetcher = () => {
+      if (synchronous) throw new Error("failed");
+      return Promise.reject(new Error("failed"));
+    };
+    await expect(getCachedCaseData("failed", fetcher)).rejects.toThrow("failed");
+    expect(await getCachedCaseData("failed", async () => "recovered")).toBe("recovered");
+  });
+});

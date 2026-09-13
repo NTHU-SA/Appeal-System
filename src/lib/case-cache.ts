@@ -29,22 +29,27 @@ export async function getCachedCaseData<T>(
     return inFlight as Promise<T>;
   }
 
-  const promise = (async () => {
-    try {
-      const data = await fetcher();
-      if (cacheStore.size >= MAX_CACHE_ENTRIES) {
-        const oldestKey = cacheStore.keys().next().value;
-        if (oldestKey) cacheStore.delete(oldestKey);
+  // Keep fetcher invocation synchronous, but handle settlement only after the
+  // promise is registered, including fetchers that throw synchronously.
+  const promise = (async () => fetcher())()
+    .then((data) => {
+      // Invalidation detaches old requests. They may finish for their original
+      // caller, but must never repopulate the cache after a newer write/read.
+      if (inFlightStore.get(key) === promise) {
+        if (!cacheStore.has(key) && cacheStore.size >= MAX_CACHE_ENTRIES) {
+          const oldestKey = cacheStore.keys().next().value;
+          if (oldestKey !== undefined) cacheStore.delete(oldestKey);
+        }
+        cacheStore.set(key, {
+          data,
+          expiresAt: Date.now() + ttlMs,
+        });
       }
-      cacheStore.set(key, {
-        data,
-        expiresAt: Date.now() + ttlMs,
-      });
       return data;
-    } finally {
-      inFlightStore.delete(key);
-    }
-  })();
+    })
+    .finally(() => {
+      if (inFlightStore.get(key) === promise) inFlightStore.delete(key);
+    });
 
   inFlightStore.set(key, promise);
   return promise;
