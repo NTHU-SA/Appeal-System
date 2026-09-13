@@ -69,7 +69,7 @@ export async function addStudentMessage(
     });
 
     await callGas("addStudentMessage", parsed);
-    invalidateCaseByToken(token);
+    await invalidateCaseByToken(token);
 
     return { ok: true, message: "補充內容與檔案已成功送出。" };
 

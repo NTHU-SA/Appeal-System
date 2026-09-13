@@ -1,3 +1,5 @@
+import { createHash, randomUUID } from "node:crypto";
+
 const DEFAULT_TTL_MS = 60_000; // 60 seconds
 const MAX_CACHE_ENTRIES = 500;
 
@@ -18,6 +20,11 @@ export async function getCachedCaseData<T>(
   fetcher: () => Promise<T>,
   ttlMs: number = DEFAULT_TTL_MS
 ): Promise<T> {
+  if (typeof caches !== "undefined" && "default" in caches) {
+    const shared = await sharedCaseCache();
+    if (shared) return getSharedCaseData(shared, key, fetcher, ttlMs);
+  }
+
   const now = Date.now();
   const cached = cacheStore.get(key);
   if (cached && cached.expiresAt > now) {
@@ -68,7 +75,92 @@ export function invalidateCaseCache(key?: string): void {
   }
 }
 
-export function invalidateCaseByToken(token: string): void {
-  invalidateCaseCache(`token:${token}`);
+export async function invalidateCaseByToken(token: string): Promise<void> {
+  const key = `token:${token}`;
+  invalidateCaseCache(key);
+  const shared = await sharedCaseCache();
+  if (shared) {
+    // Readers already in flight can only fill their old generation. They cannot
+    // replace the generation published after this mutation.
+    try {
+      await shared.put(sharedKey(key), generationResponse(randomUUID()));
+    } catch {
+      // The student message is already saved. Do not report it as a failed
+      // submission just because the optional cache is unavailable.
+      console.warn("Case cache invalidation failed");
+    }
+  }
 }
 
+
+
+const SHARED_CACHE_NAME = "campusvoice-private-cases-v1";
+
+async function sharedCaseCache(): Promise<Cache | null> {
+  // Cloudflare's Cache API is shared by isolates in a data center. Browser/Node
+  // caches are not this server-side store. Never share live I/O promises across
+  // Worker requests; React.cache handles deduplication within a page render.
+  if (typeof caches === "undefined" || !("default" in caches)) return null;
+  try {
+    return await caches.open(SHARED_CACHE_NAME);
+  } catch {
+    console.warn("Case cache unavailable");
+    return null;
+  }
+}
+
+function sharedKey(key: string, generation?: string): Request {
+  const digest = createHash("sha256")
+    .update(JSON.stringify([
+      process.env.GOOGLE_APPS_SCRIPT_WEB_APP_URL,
+      process.env.GOOGLE_APPS_SCRIPT_SHARED_SECRET,
+      key,
+    ]))
+    .digest("hex");
+  // A named cache is separate from the public fetch/CDN cache. These synthetic
+  // URLs have no public route, and never contain the bearer token or secret.
+  return new Request(new URL(
+    `/__private-case-cache/${digest}/${generation || "generation"}`,
+    process.env.NEXT_PUBLIC_APP_URL || "https://appeal.nthusa.tw",
+  ));
+}
+
+function generationResponse(generation: string): Response {
+  return new Response(generation, { headers: { "Cache-Control": "max-age=120" } });
+}
+
+async function getSharedCaseData<T>(
+  shared: Cache,
+  key: string,
+  fetcher: () => Promise<T>,
+  ttlMs: number,
+): Promise<T> {
+  let dataKey: Request | undefined;
+  try {
+    const generationKey = sharedKey(key);
+    const current = await shared.match(generationKey);
+    const generation = current ? await current.text() : randomUUID();
+    if (!current) await shared.put(generationKey, generationResponse(generation));
+    dataKey = sharedKey(key, generation);
+    const cached = await shared.match(dataKey);
+    if (cached) {
+      const entry = await cached.json() as CacheEntry<T>;
+      if (entry.expiresAt > Date.now()) return entry.data;
+    }
+  } catch {
+    console.warn("Case cache read failed");
+  }
+
+  const data = await fetcher();
+  if (dataKey && ttlMs > 0) {
+    try {
+      await shared.put(dataKey, Response.json({ data, expiresAt: Date.now() + ttlMs }, {
+        headers: { "Cache-Control": `max-age=${Math.max(1, Math.ceil(ttlMs / 1000))}` },
+      }));
+    } catch {
+      // Cache failures must not discard a successful case lookup.
+      console.warn("Case cache write failed");
+    }
+  }
+  return data;
+}
