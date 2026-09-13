@@ -33,19 +33,25 @@ class GasTransportError extends Error {}
 
 export async function callGas<T>(
   action: GasAction,
-  payload: Record<string, unknown> = {}
+  payload: Record<string, unknown> = {},
+  options?: { backoffMs?: number }
 ): Promise<T> {
   // Reads and deduplicated student submissions can safely repeat the POST.
   const retryable = action.startsWith("get") || action.startsWith("list") ||
     (action === "addStudentMessage" && typeof payload.requestId === "string");
+  const backoffMs = options?.backoffMs ?? 800;
   for (let attempt = 0; ; attempt++) {
     try {
       return await requestGas<T>(action, payload);
     } catch (error) {
       if (!(error instanceof GasTransportError) || !retryable || attempt >= 1) throw error;
+      if (backoffMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      }
     }
   }
 }
+
 
 async function requestGas<T>(
   action: GasAction,

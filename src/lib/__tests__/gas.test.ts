@@ -108,4 +108,16 @@ describe("Apps Script transport recovery", () => {
     await expect(callGas("getCaseByToken")).rejects.toThrow("轉址異常");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+  it("allows custom backoff delay during retry", async () => {
+    setup();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(null, {status: 503}))
+      .mockResolvedValueOnce(Response.json({ok: true, data: {cases: [], total: 0}}));
+    vi.stubGlobal("fetch", fetchMock);
+    const start = Date.now();
+    await expect(callGas("listCases", {}, { backoffMs: 50 })).resolves.toEqual({cases: [], total: 0});
+    expect(Date.now() - start).toBeGreaterThanOrEqual(40);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
+

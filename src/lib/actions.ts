@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { signIn, signOut as authSignOut } from "@/auth";
 import { getCurrentStaff, requireMinister, requireStaff } from "@/lib/auth";
+import { invalidateCaseByToken } from "@/lib/case-cache";
 import { callGas } from "@/lib/gas";
+
 import {
   draftReplySchema,
   memberSchema,
@@ -67,8 +69,10 @@ export async function addStudentMessage(
     });
 
     await callGas("addStudentMessage", parsed);
+    invalidateCaseByToken(token);
 
     return { ok: true, message: "補充內容與檔案已成功送出。" };
+
   } catch (error) {
     return {
       ok: false,

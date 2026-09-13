@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { getCachedCaseData } from "@/lib/case-cache";
 import { callGas } from "@/lib/gas";
 import type {
   CaseAttachment,
@@ -11,12 +12,17 @@ import type {
 } from "@/lib/types";
 
 export const getCaseByToken = cache(async (token: string) => {
-  return callGas<{
-    case: CaseRecord;
-    messages: CaseMessage[];
-    attachments: CaseAttachment[];
-  } | null>("getCaseByToken", { token });
+  return getCachedCaseData(
+    `token:${token}`,
+    () =>
+      callGas<{
+        case: CaseRecord;
+        messages: CaseMessage[];
+        attachments: CaseAttachment[];
+      } | null>("getCaseByToken", { token })
+  );
 });
+
 
 export async function getAdminCase(caseId: string) {
   return callGas<{
