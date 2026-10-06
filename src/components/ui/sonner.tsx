@@ -1,27 +1,30 @@
 "use client"
 
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon } from "lucide-react"
+import { CircleCheckIcon, CircleXIcon, InfoIcon, TriangleAlertIcon } from "lucide-react"
 
 import { Spinner } from "@/components/ui/spinner"
 
-// Colours come from the design tokens, so the toast follows the page theme;
-// status colour is limited to the icon.
+// Toast: surface, 1px border, radius lg, 10px 12px padding, level-2 shadow.
+// The 16px icon takes the status text step; the message stays text-primary;
+// an optional action reads as an accent text button. Write what was done
+// ("已送出補充內容"), never "操作成功".
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      position="bottom-right"
       icons={{
-        success: <CircleCheckIcon className="size-4 text-success" />,
-        info: <InfoIcon className="size-4 text-text-tertiary" />,
-        warning: <TriangleAlertIcon className="size-4 text-warning" />,
-        error: <OctagonXIcon className="size-4 text-danger-text" />,
+        success: <CircleCheckIcon className="size-4 text-success-text" />,
+        info: <InfoIcon className="size-4 text-info-text" />,
+        warning: <TriangleAlertIcon className="size-4 text-warning-text" />,
+        error: <CircleXIcon className="size-4 text-danger-text" />,
         loading: <Spinner className="text-text-tertiary" />,
       }}
       style={
         {
           "--normal-bg": "var(--surface)",
-          "--normal-text": "var(--text-secondary)",
+          "--normal-text": "var(--text-primary)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius-lg)",
           zIndex: 600,
@@ -29,9 +32,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "text-body-md shadow-level-2!",
-          title: "text-label-md text-text-primary",
+          toast: "gap-2! px-3! py-2.5! text-body-sm! shadow-level-2! font-sans!",
+          title: "font-normal! text-text-primary!",
           description: "text-text-tertiary!",
+          icon: "self-start! mt-0.5! mr-0!",
+          actionButton:
+            "h-auto! bg-transparent! px-1! text-control! text-primary-text! transition-colors hover:text-primary-text-strong!",
+          cancelButton: "h-auto! bg-transparent! px-1! text-control! text-text-tertiary!",
         },
       }}
       {...props}

@@ -16,6 +16,7 @@ const twMerge = extendTailwindMerge({
         "title-sm",
         "body-lg",
         "body-md",
+        "body-sm",
         "label-md",
         "control",
         "caption",

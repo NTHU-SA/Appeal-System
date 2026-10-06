@@ -19,7 +19,12 @@ const buttonVariants = cva(
           "border-border bg-transparent text-primary-text hover:bg-surface-hover active:bg-surface-active active:text-primary-text-strong disabled:bg-surface-hover disabled:text-text-muted disabled:opacity-100",
         ghost:
           "bg-transparent text-text-tertiary hover:bg-surface-hover hover:text-text-primary active:bg-surface-active active:text-text-primary aria-expanded:bg-surface-hover aria-expanded:text-text-primary",
-        danger: "bg-danger text-on-primary hover:bg-danger-hover",
+        // Coral with white text is only 2.9:1, so the fill is the danger
+        // text step in both themes.
+        danger:
+          "bg-danger-solid text-on-primary hover:bg-danger-solid-hover active:bg-danger-solid-hover",
+        "danger-secondary":
+          "border-border bg-transparent text-danger-text hover:bg-surface-hover active:bg-surface-active disabled:bg-surface-hover disabled:text-text-muted disabled:opacity-100",
         link: "h-auto rounded-none px-0 text-primary-text underline-offset-4 hover:underline",
       },
       size: {

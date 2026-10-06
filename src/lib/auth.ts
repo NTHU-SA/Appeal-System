@@ -1,7 +1,9 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { callGas } from "@/lib/gas";
+import { getPreviewState, previewEmails } from "@/lib/preview/state";
 import type { UserRole } from "@/lib/types";
 import { staffRoleFromMemberRole } from "@/lib/workflow";
 
@@ -11,7 +13,15 @@ export type StaffSession = {
   role: UserRole;
 };
 
-export async function getCurrentStaff(): Promise<StaffSession | null> {
+// Deduplicated per request: the staff layout and its page both ask.
+export const getCurrentStaff = cache(async (): Promise<StaffSession | null> => {
+  const preview = await getPreviewState();
+  if (preview) {
+    if (preview.persona !== "minister" && preview.persona !== "member") return null;
+    const email = previewEmails[preview.persona];
+    return { id: email, email, role: preview.persona };
+  }
+
   const session = await auth();
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
@@ -34,6 +44,14 @@ export async function getCurrentStaff(): Promise<StaffSession | null> {
   }
 
   return null;
+});
+
+// The signed-in Google account, staff or not.
+export async function getSignedInEmail(): Promise<string | null> {
+  const preview = await getPreviewState();
+  if (preview) return preview.persona === "guest" ? null : previewEmails[preview.persona];
+  const session = await auth();
+  return session?.user?.email ?? null;
 }
 
 export async function requireStaff() {

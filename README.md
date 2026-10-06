@@ -19,6 +19,10 @@ pnpm install
 pnpm dev
 ```
 
+### UI preview (development only)
+
+Open `http://localhost:3000/preview` while `pnpm dev` is running to open every page and state with fixture data, without Google sign-in or Apps Script (no `.env.local` needed). The floating「UI 預覽」button switches persona (部長 / 部員 / 未授權 / 未登入), sample or empty data, and theme. `/preview/components` shows every design token and component state from `DESIGN.md`. Preview mode is disabled in production builds.
+
 ## Environment
 
 Copy `.env.example` to `.env.local` and fill in:

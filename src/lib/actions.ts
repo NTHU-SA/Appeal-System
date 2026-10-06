@@ -1,11 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { signIn, signOut as authSignOut } from "@/auth";
 import { getCurrentStaff, requireMinister, requireStaff } from "@/lib/auth";
 import { invalidateCaseByToken } from "@/lib/case-cache";
 import { callGas } from "@/lib/gas";
+import { PREVIEW_COOKIE, serializePreviewState } from "@/lib/preview/config";
+import { getPreviewState } from "@/lib/preview/state";
 
 import {
   draftReplySchema,
@@ -136,7 +140,16 @@ export async function removeMember(formData: FormData) {
   revalidatePath("/admin/members");
 }
 
+// UI preview: signing in or out switches the preview persona instead.
+async function switchPreviewPersona(persona: "minister" | "guest", redirectTo: string) {
+  const preview = await getPreviewState();
+  if (!preview) return;
+  (await cookies()).set(PREVIEW_COOKIE, serializePreviewState({ ...preview, persona }), { path: "/" });
+  redirect(redirectTo);
+}
+
 export async function signInWithGoogle() {
+  await switchPreviewPersona("minister", "/dashboard");
   await signIn("google", { redirectTo: "/dashboard" });
 }
 
@@ -145,6 +158,7 @@ export async function signOut(formData?: FormData) {
     formData && typeof formData.get === "function" && formData.get("redirectTo")
       ? String(formData.get("redirectTo"))
       : "/";
+  await switchPreviewPersona("guest", redirectTo);
   await authSignOut({ redirectTo });
 }
 

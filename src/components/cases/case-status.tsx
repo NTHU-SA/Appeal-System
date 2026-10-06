@@ -1,19 +1,33 @@
+import { caseStatusTone, categoryTone } from "@/lib/case-display";
 import { statusLabels, type CaseStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { InlineStatus } from "@/components/ui/status";
 
-// Status colours are on hold (DESIGN.md), so statuses are told apart with the
-// accent and neutral tones plus the outlined appearance; the label carries
-// the meaning.
-const statusStyles: Record<
-  CaseStatus,
-  { tone: "primary" | "neutral"; appearance: "filled" | "border" }
-> = {
-  pending: { tone: "primary", appearance: "filled" },
-  in_progress: { tone: "primary", appearance: "border" },
-  closed: { tone: "neutral", appearance: "filled" },
-  rejected: { tone: "neutral", appearance: "border" },
-};
+// Case status as an inline status (dot + label), never a badge.
+export function CaseStatusIndicator({
+  status,
+  count,
+  className,
+}: {
+  status: CaseStatus;
+  count?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <InlineStatus
+      tone={caseStatusTone[status]}
+      label={statusLabels[status]}
+      count={count}
+      className={className}
+    />
+  );
+}
 
-export function CaseStatusBadge({ status }: { status: CaseStatus }) {
-  return <Badge {...statusStyles[status]}>{statusLabels[status]}</Badge>;
+// Complaint category as a categorical badge (data-1 → data-8).
+export function CategoryBadge({ category, className }: { category: string; className?: string }) {
+  return (
+    <Badge tone={categoryTone(category)} className={className}>
+      {category || "未分類"}
+    </Badge>
+  );
 }

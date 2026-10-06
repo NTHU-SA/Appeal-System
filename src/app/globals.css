@@ -8,7 +8,8 @@
  * Components reference semantic tokens only; light and dark values switch
  * here and nowhere else. Without a data-theme attribute the page follows the
  * system setting. data-theme="light" or "dark" forces a theme on <html> or on
- * any subtree (e.g. the embedded Apps Script form, which is always light).
+ * any subtree (e.g. the marketing hero and the embedded Apps Script form,
+ * which are always light).
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -59,6 +60,9 @@
   --text-body-md: 0.875rem;
   --text-body-md--line-height: 1.5;
   --text-body-md--font-weight: 400;
+  --text-body-sm: 0.8125rem;
+  --text-body-sm--line-height: 1.5;
+  --text-body-sm--font-weight: 400;
   --text-label-md: 0.875rem;
   --text-label-md--line-height: 1.25;
   --text-label-md--font-weight: 500;
@@ -121,12 +125,65 @@
   --color-text-tertiary: var(--text-tertiary);
   --color-text-muted: var(--text-muted);
 
-  /* Status (provisional, see DESIGN.md) */
+  /* Status: the base colour fills dots and bars; -text is the readable step
+     for text, icons and error outlines. */
   --color-success: var(--success);
+  --color-success-text: var(--success-text);
   --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
   --color-danger: var(--danger);
-  --color-danger-hover: var(--danger-hover);
   --color-danger-text: var(--danger-text);
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-highlight: var(--highlight);
+  --color-highlight-text: var(--highlight-text);
+  --color-highlight-tint: var(--data-1-tint);
+  /* Danger button fill: white text needs the dark step in both themes. */
+  --color-danger-solid: var(--danger-solid);
+  --color-danger-solid-hover: var(--danger-solid-hover);
+
+  /* Categorical data, used in order 1 → 8. Base: fills. -text: text and
+     icons (4.5:1). -line: thin chart marks (3:1). -tint: badge backgrounds. */
+  --color-data-1: var(--data-1);
+  --color-data-1-text: var(--data-1-text);
+  --color-data-1-line: var(--data-1-line);
+  --color-data-1-tint: var(--data-1-tint);
+  --color-data-2: var(--data-2);
+  --color-data-2-text: var(--data-2-text);
+  --color-data-2-line: var(--data-2-line);
+  --color-data-2-tint: var(--data-2-tint);
+  --color-data-3: var(--data-3);
+  --color-data-3-text: var(--data-3-text);
+  --color-data-3-line: var(--data-3-line);
+  --color-data-3-tint: var(--data-3-tint);
+  --color-data-4: var(--data-4);
+  --color-data-4-text: var(--data-4-text);
+  --color-data-4-line: var(--data-4-line);
+  --color-data-4-tint: var(--data-4-tint);
+  --color-data-5: var(--data-5);
+  --color-data-5-text: var(--data-5-text);
+  --color-data-5-line: var(--data-5-line);
+  --color-data-5-tint: var(--data-5-tint);
+  --color-data-6: var(--data-6);
+  --color-data-6-text: var(--data-6-text);
+  --color-data-6-line: var(--data-6-line);
+  --color-data-6-tint: var(--data-6-tint);
+  --color-data-7: var(--data-7);
+  --color-data-7-text: var(--data-7-text);
+  --color-data-7-line: var(--data-7-line);
+  --color-data-7-tint: var(--data-7-tint);
+  --color-data-8: var(--data-8);
+  --color-data-8-text: var(--data-8-text);
+  --color-data-8-line: var(--data-8-line);
+  --color-data-8-tint: var(--data-8-tint);
+  --color-on-data: var(--on-data);
+
+  /* Marketing hero shapes only: never UI, text or charts. */
+  --color-shape-lavender: #9281d4;
+  --color-shape-mint: #a4e9db;
+  --color-shape-coral: #e17e6d;
+  --color-shape-tan: #c5997a;
+  --color-shape-green: #5cc184;
 
   /* Elevation: floating layers only */
   --shadow-level-1: var(--elevation-1);
@@ -144,7 +201,7 @@
   --primary-active: #4d4076;
   /* Purple used as text, links and selection lines. */
   --primary-text: #6e619c;
-  /* Purple text on purple-tinted surfaces (badges) needs one step darker. */
+  /* Purple text on purple-tinted surfaces needs one step darker. */
   --primary-text-strong: #5d4f8b;
   --on-primary: #ffffff;
 
@@ -160,12 +217,52 @@
   --text-tertiary: #6c6c6d;
   --text-muted: #8a8b8c;
 
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  /* Readable danger text on white and on danger-tinted surfaces. */
-  --danger-text: #b91c1c;
+  --success: #5cc184;
+  --success-text: #16884f;
+  --warning: #e7c869;
+  --warning-text: #8d7102;
+  --danger: #e17e6d;
+  --danger-text: #b85a4a;
+  --danger-solid: #b85a4a;
+  --danger-solid-hover: #a44839;
+  --info: #67b5e1;
+  --info-text: #2c7da7;
+  --highlight: #9281d4;
+  --highlight-text: #7a69ba;
+
+  --data-1: #9281d4;
+  --data-1-text: #7a69ba;
+  --data-1-line: #9281d4;
+  --data-1-tint: #eeebf8;
+  --data-2: #e17e6d;
+  --data-2-text: #b85a4a;
+  --data-2-line: #da7867;
+  --data-2-tint: #faeae8;
+  --data-3: #a4e9db;
+  --data-3-text: #3d8175;
+  --data-3-line: #5c9f92;
+  --data-3-tint: #f0fbf9;
+  --data-4: #e7c869;
+  --data-4-text: #8d7102;
+  --data-4-line: #b0922e;
+  --data-4-tint: #fbf6e7;
+  --data-5: #67b5e1;
+  --data-5-text: #2c7da7;
+  --data-5-line: #4d9cc7;
+  --data-5-tint: #e7f3fa;
+  --data-6: #e391b8;
+  --data-6-text: #ab5e84;
+  --data-6-line: #cb7ca2;
+  --data-6-tint: #fbedf4;
+  --data-7: #5cc184;
+  --data-7-text: #16884f;
+  --data-7-line: #40a76c;
+  --data-7-tint: #e5f5eb;
+  --data-8: #c5997a;
+  --data-8-text: #956c4e;
+  --data-8-line: #b58a6b;
+  --data-8-tint: #f6efea;
+  --on-data: #1f1f20;
 
   --elevation-1: 0 0 12px rgb(0 0 0 / 6%);
   --elevation-2: 0 4px 12px rgb(0 0 0 / 10%);
@@ -188,7 +285,9 @@
 }
 
 /* Dark tokens are declared twice: once for the system setting and once for
-   an explicit data-theme="dark". Keep both blocks identical. */
+   an explicit data-theme="dark". Keep both blocks identical. Status and
+   data colours are bright enough on the dark surface, so their -text and
+   -line steps fall back to the base colour. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
@@ -209,7 +308,36 @@
     --text-tertiary: #a4a4a6;
     --text-muted: #717173;
 
-    --danger-text: #f87171;
+    --success-text: #5cc184;
+    --warning-text: #e7c869;
+    --danger-text: #e17e6d;
+    --info-text: #67b5e1;
+    --highlight-text: #9281d4;
+
+    --data-1-text: #9281d4;
+    --data-1-line: #9281d4;
+    --data-1-tint: #302b41;
+    --data-2-text: #e17e6d;
+    --data-2-line: #e17e6d;
+    --data-2-tint: #412b2a;
+    --data-3-text: #a4e9db;
+    --data-3-line: #a4e9db;
+    --data-3-tint: #344242;
+    --data-4-text: #e7c869;
+    --data-4-line: #e7c869;
+    --data-4-tint: #423b29;
+    --data-5-text: #67b5e1;
+    --data-5-line: #67b5e1;
+    --data-5-tint: #263743;
+    --data-6-text: #e391b8;
+    --data-6-line: #e391b8;
+    --data-6-tint: #422f3a;
+    --data-7-text: #5cc184;
+    --data-7-line: #5cc184;
+    --data-7-tint: #24392f;
+    --data-8-text: #c5997a;
+    --data-8-line: #c5997a;
+    --data-8-tint: #3b302d;
 
     --elevation-1: 0 0 12px rgb(0 0 0 / 40%), 0 0 0 1px rgb(255 255 255 / 8%);
     --elevation-2: 0 8px 16px rgb(0 0 0 / 45%), 0 0 0 1px rgb(255 255 255 / 8%);
@@ -237,7 +365,36 @@
   --text-tertiary: #a4a4a6;
   --text-muted: #717173;
 
-  --danger-text: #f87171;
+  --success-text: #5cc184;
+  --warning-text: #e7c869;
+  --danger-text: #e17e6d;
+  --info-text: #67b5e1;
+  --highlight-text: #9281d4;
+
+  --data-1-text: #9281d4;
+  --data-1-line: #9281d4;
+  --data-1-tint: #302b41;
+  --data-2-text: #e17e6d;
+  --data-2-line: #e17e6d;
+  --data-2-tint: #412b2a;
+  --data-3-text: #a4e9db;
+  --data-3-line: #a4e9db;
+  --data-3-tint: #344242;
+  --data-4-text: #e7c869;
+  --data-4-line: #e7c869;
+  --data-4-tint: #423b29;
+  --data-5-text: #67b5e1;
+  --data-5-line: #67b5e1;
+  --data-5-tint: #263743;
+  --data-6-text: #e391b8;
+  --data-6-line: #e391b8;
+  --data-6-tint: #422f3a;
+  --data-7-text: #5cc184;
+  --data-7-line: #5cc184;
+  --data-7-tint: #24392f;
+  --data-8-text: #c5997a;
+  --data-8-line: #c5997a;
+  --data-8-tint: #3b302d;
 
   --elevation-1: 0 0 12px rgb(0 0 0 / 40%), 0 0 0 1px rgb(255 255 255 / 8%);
   --elevation-2: 0 8px 16px rgb(0 0 0 / 45%), 0 0 0 1px rgb(255 255 255 / 8%);
@@ -284,6 +441,26 @@
 
 @utility title-features {
   font-feature-settings: "cv05", "cv06", "cv12", "cv13", "ss07";
+}
+
+/* Scroll column: the list column fades in an 18px mask under its sticky
+   search row once it has been scrolled (data-scrolled is set by script). */
+@utility scroll-mask {
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    height: 18px;
+    pointer-events: none;
+    background: linear-gradient(var(--background), transparent);
+    opacity: 0;
+    transition: opacity 100ms ease-in-out;
+  }
+
+  &[data-scrolled]::after {
+    opacity: 1;
+  }
 }
 
 @layer components {

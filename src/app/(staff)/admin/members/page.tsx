@@ -1,22 +1,16 @@
-import { Trash2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 import { requireMinister } from "@/lib/auth";
-import { removeMember, upsertMember } from "@/lib/actions";
+import { roleTone } from "@/lib/case-display";
 import { getMembers } from "@/lib/data";
 import { roleLabels } from "@/lib/types";
-import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
+import { MemberDialog } from "@/components/members/member-dialog";
+import { MemberRowActions } from "@/components/members/member-row-actions";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Notice } from "@/components/ui/notice";
 import {
   Table,
   TableBody,
@@ -26,100 +20,88 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+export const metadata = { title: "成員 · 學生申訴協力系統" };
+
 export default async function MembersPage() {
-  const [staff, members] = await Promise.all([
-    requireMinister(),
-    getMembers(),
-  ]);
+  const [staff, members] = await Promise.all([requireMinister(), getMembers()]);
+  const ministers = members.filter((member) => member.role === "minister").length;
 
   return (
-    <AppShell staff={staff}>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-headline-md text-text-primary">成員</h1>
-          <p className="text-body-md text-text-secondary">
-            管理可登入後台的部長與部員帳號。
-          </p>
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-6 lg:px-10 lg:py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-headline-md text-text-primary">成員</h1>
+            <p className="text-body-md text-text-secondary">管理可以登入後台的部長與部員帳號。</p>
+          </div>
+          <MemberDialog />
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-[24rem_1fr]">
-          <Card>
-            <CardHeader>
-              <CardTitle>新增部員</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form action={upsertMember} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="role">角色</Label>
-                  <Select name="role" defaultValue="member">
-                    <SelectTrigger id="role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="member">部員</SelectItem>
-                      <SelectItem value="minister">部長</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button className="w-full">儲存成員</Button>
-              </form>
-            </CardContent>
-          </Card>
+        <Notice>
+          部長可以管理成員並核准回覆；部員可以處理案件、撰寫回覆並送交審核。成員名單同步自 Google Sheet 的 Members 工作表。
+        </Notice>
 
-          <Card className="pb-0">
-            <CardHeader>
-              <CardTitle>成員列表</CardTitle>
-            </CardHeader>
-            <div className="border-t">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead className="w-12">
-                      <span className="sr-only">操作</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map((member) => (
-                    <TableRow key={member.id || member.email}>
-                      <TableCell className="text-text-primary">{member.email}</TableCell>
-                      <TableCell>{roleLabels[member.role as "minister" | "member"]}</TableCell>
+        <section aria-labelledby="members-heading" className="overflow-hidden rounded-lg border">
+          <div className="flex items-baseline justify-between gap-4 px-4 py-3">
+            <h2 id="members-heading" className="title-features text-title-sm text-text-primary">成員列表</h2>
+            <span className="text-caption text-text-tertiary tabular-nums">
+              {members.length} 位成員 · {ministers} 位部長
+            </span>
+          </div>
+          <div className="border-t">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>帳號</TableHead>
+                  <TableHead>角色</TableHead>
+                  <TableHead className="hidden sm:table-cell">加入時間</TableHead>
+                  <TableHead className="w-12">
+                    <span className="sr-only">操作</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => {
+                  const isSelf = member.email.toLowerCase() === staff.email.toLowerCase();
+                  return (
+                    <TableRow key={member.id || member.email} className="hover:bg-surface-hover">
+                      <TableCell>
+                        <span className="flex items-center gap-3">
+                          <Avatar size="sm">
+                            <AvatarFallback>{member.email.slice(0, 1).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <span className="truncate text-text-primary">{member.email}</span>
+                          {isSelf ? <span className="text-caption text-text-tertiary">（你）</span> : null}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge tone={roleTone[member.role]}>{roleLabels[member.role]}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden text-text-tertiary tabular-nums sm:table-cell">
+                        {member.created_at ? formatDate(member.created_at) : "—"}
+                      </TableCell>
                       <TableCell className="py-1 text-right">
-                        {member.id ? (
-                          <form action={removeMember}>
-                            <input type="hidden" name="id" value={member.id} />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`移除 ${member.email}`}
-                              className="hover:text-danger-text active:text-danger-text"
-                            >
-                              <Trash2 />
-                            </Button>
-                          </form>
-                        ) : null}
+                        {member.id ? <MemberRowActions member={member} isSelf={isSelf} /> : null}
                       </TableCell>
                     </TableRow>
-                  ))}
-                  {!members.length ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="whitespace-normal">
-                        <EmptyState icon={Users} title="尚未建立成員" />
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        </div>
+                  );
+                })}
+                {!members.length ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="whitespace-normal">
+                      <EmptyState
+                        icon={Users}
+                        title="尚未建立成員"
+                        description="用「新增成員」加入第一位部員或部長。"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
       </div>
-    </AppShell>
+    </div>
   );
 }

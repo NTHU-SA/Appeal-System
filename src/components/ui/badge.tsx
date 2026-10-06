@@ -4,30 +4,27 @@ import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
-// Tinted label: solid-colour text on the same colour at 20% opacity. The
-// `border` appearance adds a 1px outline in the same colour.
+// One style only: the colour's tint step as the background and its text
+// step as the label, no outline. For user tags, categories and filters;
+// statuses use InlineStatus instead.
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center gap-1 rounded-sm border border-transparent px-2 py-1 text-body-md whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:size-3.5",
+  "inline-flex w-fit shrink-0 items-center gap-1 rounded-sm px-2 py-0.5 text-body-sm whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:size-3.5",
   {
     variants: {
       tone: {
-        primary: "bg-primary/20 text-primary-text-strong",
-        neutral: "bg-text-tertiary/20 text-text-secondary",
-        danger: "bg-danger/20 text-danger-text",
-      },
-      appearance: {
-        filled: "",
-        border: "",
+        neutral: "bg-surface-sunken text-text-secondary",
+        "data-1": "bg-data-1-tint text-data-1-text",
+        "data-2": "bg-data-2-tint text-data-2-text",
+        "data-3": "bg-data-3-tint text-data-3-text",
+        "data-4": "bg-data-4-tint text-data-4-text",
+        "data-5": "bg-data-5-tint text-data-5-text",
+        "data-6": "bg-data-6-tint text-data-6-text",
+        "data-7": "bg-data-7-tint text-data-7-text",
+        "data-8": "bg-data-8-tint text-data-8-text",
       },
     },
-    compoundVariants: [
-      { tone: "primary", appearance: "border", className: "border-primary-text-strong/40" },
-      { tone: "neutral", appearance: "border", className: "border-text-tertiary/40" },
-      { tone: "danger", appearance: "border", className: "border-danger-text/40" },
-    ],
     defaultVariants: {
       tone: "neutral",
-      appearance: "filled",
     },
   }
 )
@@ -35,7 +32,6 @@ const badgeVariants = cva(
 function Badge({
   className,
   tone,
-  appearance,
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &
@@ -45,10 +41,26 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
-      className={cn(badgeVariants({ tone, appearance }), className)}
+      className={cn(badgeVariants({ tone }), className)}
       {...props}
     />
   )
 }
 
-export { Badge, badgeVariants }
+// "NEW" pill: the only use of the highlight colour.
+function NewBadge({ className, children = "NEW", ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="new-badge"
+      className={cn(
+        "inline-flex h-4 items-center rounded-full bg-highlight-tint px-1.5 text-overline text-highlight-text uppercase",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+}
+
+export { Badge, NewBadge, badgeVariants }

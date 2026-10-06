@@ -1,3 +1,5 @@
+import { previewAvailable } from "@/lib/preview/config";
+
 export type GasAction =
   | "getMemberRole"
   | "listMembers"
@@ -31,11 +33,26 @@ export function hasGasEnv() {
 
 class GasTransportError extends Error {}
 
+// UI preview (development only): answer from fixtures when the preview
+// cookie is set.
+async function previewResponse(action: GasAction, payload: Record<string, unknown>) {
+  const { getPreviewState } = await import("@/lib/preview/state");
+  const state = await getPreviewState();
+  if (!state) return null;
+  const { previewGas } = await import("@/lib/preview/gas");
+  return { data: await previewGas(action, payload, state) };
+}
+
 export async function callGas<T>(
   action: GasAction,
   payload: Record<string, unknown> = {},
   options?: { backoffMs?: number }
 ): Promise<T> {
+  if (previewAvailable()) {
+    const preview = await previewResponse(action, payload);
+    if (preview) return preview.data as T;
+  }
+
   // Reads and deduplicated student submissions can safely repeat the POST.
   const retryable = action.startsWith("get") || action.startsWith("list") ||
     (action === "addStudentMessage" && typeof payload.requestId === "string");

@@ -41,7 +41,7 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "flex h-(--control-height) w-full items-center justify-between gap-2 rounded-sm border bg-surface px-3 text-body-md whitespace-nowrap text-text-primary transition-colors outline-none select-none focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger data-placeholder:text-text-muted pointer-coarse:text-body-lg *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex h-(--control-height) w-full items-center justify-between gap-2 rounded-sm border bg-surface px-3 text-body-md whitespace-nowrap text-text-primary transition-colors outline-none select-none focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-text data-placeholder:text-text-muted pointer-coarse:text-body-lg *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

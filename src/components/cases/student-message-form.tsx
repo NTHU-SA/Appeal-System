@@ -1,45 +1,25 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import {
-  CircleAlert,
-  CircleCheck,
-  FileText,
-  ImageIcon,
-  Paperclip,
-  Send,
-  UploadCloud,
-  X,
-} from "lucide-react";
+import { FileText, ImageIcon, Paperclip, Send, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { addStudentMessage, type ActionState } from "@/lib/actions";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldHint } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+import { Notice } from "@/components/ui/notice";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_FILES = 3;
 
-function SubmitButton({ disabled }: { disabled?: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending || disabled}>
-      {pending ? (
-        <>
-          <Spinner />
-          <span>送出中...</span>
-        </>
-      ) : (
-        <>
-          <span>送出</span>
-          <Send />
-        </>
-      )}
-    </Button>
-  );
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function StudentMessageForm({ token }: { token: string }) {
@@ -59,7 +39,11 @@ export function StudentMessageForm({ token }: { token: string }) {
     formData.set("requestId", requestRef.current.id);
     formData.delete("files");
     files.forEach((file) => formData.append("files", file));
-    return addStudentMessage(previous, formData);
+    const result = await addStudentMessage(previous, formData);
+    if (result.ok) {
+      toast.success(files.length ? `已送出補充內容與 ${files.length} 個檔案` : "已送出補充內容");
+    }
+    return result;
   }, {
     ok: false,
     message: "",
@@ -88,10 +72,9 @@ export function StudentMessageForm({ token }: { token: string }) {
     const selected = Array.from(event.target.files || []);
     if (!selected.length) return;
 
-    // Check size limit
     const oversize = selected.find((f) => f.size > MAX_FILE_BYTES);
     if (oversize) {
-      setFileError(`「${oversize.name}」超過 8MB 限制，請縮減大小後再上傳。`);
+      setFileError(`「${oversize.name}」超過 8MB，請壓縮或分割後再上傳。`);
       return;
     }
 
@@ -101,8 +84,8 @@ export function StudentMessageForm({ token }: { token: string }) {
         combined.push(newFile);
       }
     }
-    if (combined.length > 3) {
-      setFileError("每次最多上傳 3 個檔案。");
+    if (combined.length > MAX_FILES) {
+      setFileError(`每次最多上傳 ${MAX_FILES} 個檔案，請先移除部分檔案。`);
       return;
     }
     setFiles(combined);
@@ -113,60 +96,40 @@ export function StudentMessageForm({ token }: { token: string }) {
   }
 
   function removeFile(indexToRemove: number) {
+    setFileError(null);
     setFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  }
-
-  function formatBytes(bytes: number) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   }
 
   const isFormEmpty = bodyText.trim().length === 0 && files.length === 0;
 
   return (
-    <div className="flex flex-col gap-4">
-      {state.message ? (
-        <Alert role="status" variant={state.ok ? "success" : "destructive"}>
-          {state.ok ? <CircleCheck /> : <CircleAlert />}
-          <AlertTitle>{state.ok ? "已成功送出" : "送出失敗"}</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
+    <form ref={formRef} action={action} className="flex flex-col gap-4">
+      <input type="hidden" name="token" value={token} />
+
+      {!state.ok && state.message ? (
+        <Notice tone="danger" title="補充內容尚未送出" role="alert">
+          {state.message}
+        </Notice>
       ) : null}
 
-      {fileError ? (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>檔案驗證錯誤</AlertTitle>
-          <AlertDescription>{fileError}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <form ref={formRef} action={action} className="flex flex-col gap-4">
-        <input type="hidden" name="token" value={token} />
-
-        <div className="flex items-center justify-between gap-4">
+      <fieldset disabled={pending} className="flex min-w-0 flex-col gap-4">
+        <Field>
           <Label htmlFor="body">留言</Label>
-          <SubmitButton disabled={isFormEmpty} />
-        </div>
-        <fieldset disabled={pending} className="flex min-w-0 flex-col gap-4">
-        <Textarea
-          id="body"
-          name="body"
-          rows={4}
-          value={bodyText}
-          onChange={(e) => setBodyText(e.target.value)}
-          placeholder="補充案件資訊或回覆幹部…"
-        />
+          <Textarea
+            id="body"
+            name="body"
+            rows={4}
+            value={bodyText}
+            onChange={(e) => setBodyText(e.target.value)}
+            placeholder="補充案件資訊，或回覆學權幹部的問題…"
+            className="min-h-28"
+          />
+        </Field>
 
-        {/* File Upload Zone */}
-        <div className="flex flex-col gap-2">
+        <Field>
           <div className="flex items-center justify-between gap-4">
-            <Label>
-              <Paperclip className="size-4 text-text-tertiary" />
-              附件
-            </Label>
-            <span className="text-caption text-text-tertiary">最多 3 檔，每檔 8MB</span>
+            <Label id="files-label">附件</Label>
+            <FieldHint>最多 {MAX_FILES} 個檔案，每個 8MB 以內</FieldHint>
           </div>
 
           <input
@@ -176,67 +139,68 @@ export function StudentMessageForm({ token }: { token: string }) {
             id="supplementFiles"
             multiple
             accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-            className="hidden"
+            className="sr-only"
+            aria-labelledby="files-label"
+            aria-describedby={fileError ? "files-error" : undefined}
             onChange={handleFileChange}
           />
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed bg-surface p-4 text-center transition-colors hover:bg-surface-hover active:bg-surface-active"
+          <div
+            data-invalid={fileError ? "" : undefined}
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed bg-surface-sunken p-4 data-invalid:border-danger-text"
           >
-            <UploadCloud className="mb-1 size-5 text-text-tertiary" />
-            <span className="text-label-md text-text-primary">選擇檔案</span>
+            <Button type="button" variant="secondary" className="bg-surface" onClick={() => fileInputRef.current?.click()}>
+              <Paperclip />
+              選擇檔案
+            </Button>
             <span className="text-caption text-text-tertiary">PDF、Word、PNG、JPG</span>
-          </button>
+          </div>
 
-          {/* Selected Files List */}
-          {files.length > 0 && (
-            <div className="flex flex-col gap-2 pt-1">
-              <p className="text-caption text-text-tertiary">
-                已選取 {files.length} 個檔案
-              </p>
-              <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto">
-                {files.map((file, idx) => {
-                  const Icon = file.type.startsWith("image/") ? ImageIcon : FileText;
-                  return (
-                    <li
-                      key={`${file.name}-${file.lastModified}-${idx}`}
-                      className="flex items-center gap-2 rounded-sm border py-1 pr-1 pl-3"
+          <FieldError id="files-error">{fileError}</FieldError>
+
+          {files.length > 0 ? (
+            <ul className="flex flex-col gap-1" aria-label="已選取的檔案">
+              {files.map((file, idx) => {
+                const Icon = file.type.startsWith("image/") ? ImageIcon : FileText;
+                return (
+                  <li
+                    key={`${file.name}-${file.lastModified}-${idx}`}
+                    className="flex h-(--control-height) items-center gap-2 rounded-sm border pl-3"
+                  >
+                    <Icon className="size-4 shrink-0 text-text-tertiary" />
+                    <span className="min-w-0 truncate text-body-sm text-text-primary" title={file.name}>
+                      {file.name}
+                    </span>
+                    <span className="ml-auto shrink-0 text-caption text-text-tertiary tabular-nums">
+                      {formatBytes(file.size)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="hover:text-danger-text active:text-danger-text"
+                      aria-label={`移除 ${file.name}`}
+                      onClick={() => removeFile(idx)}
                     >
-                      <Icon className="size-4 shrink-0 text-text-tertiary" />
-                      <span className="min-w-0 truncate text-text-primary" title={file.name}>
-                        {file.name}
-                      </span>
-                      <span className="shrink-0 text-caption text-text-tertiary">
-                        {formatBytes(file.size)}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="ml-auto hover:text-danger-text active:text-danger-text"
-                        aria-label={`移除 ${file.name}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(idx);
-                        }}
-                      >
-                        <X />
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-        </div>
+                      <X />
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </Field>
+      </fieldset>
 
-        </fieldset>
-        {pending && <p role="status" className="text-caption text-text-tertiary">正在儲存，請勿關閉頁面或重複送出。</p>}
-        <p className="text-caption text-text-tertiary">新回覆將以 email 通知。請勿轉傳此專屬連結。</p>
-      </form>
-
-    </div>
+      <div className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p role="status" className="text-caption text-text-tertiary">
+          {pending ? "正在送出，請勿關閉頁面或重複送出。" : "新的回覆會以 email 通知你。"}
+        </p>
+        <Button type="submit" disabled={pending || isFormEmpty}>
+          {pending ? <Spinner /> : <Send />}
+          {pending ? "送出中…" : "送出"}
+        </Button>
+      </div>
+    </form>
   );
 }

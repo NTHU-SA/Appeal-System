@@ -40,11 +40,14 @@
         --text-secondary: #4d4d4e;
         --text-tertiary: #6c6c6d;
         --text-muted: #8a8b8c;
-        --success: #10b981;
-        --danger: #dc2626;
-        --danger-text: #b91c1c;
+        /* Status: base colour for fills, -text for text, icons and outlines. */
+        --success-text: #16884f;
+        --danger-text: #b85a4a;
+        --info-text: #2c7da7;
         --radius-sm: 4px;
+        --radius-md: 6px;
         --radius-lg: 8px;
+        --elevation-2: 0 4px 12px rgb(0 0 0 / 10%);
         /* 32px controls; touch targets grow to 44px. */
         --control-height: 32px;
         --font: "Inter", system-ui, sans-serif;
@@ -71,6 +74,14 @@
         -webkit-font-smoothing: antialiased;
       }
 
+      [hidden] {
+        display: none !important;
+      }
+
+      svg {
+        flex: none;
+      }
+
       main {
         width: min(1080px, 100%);
         margin: 0 auto;
@@ -81,6 +92,13 @@
         main {
           padding: 40px;
         }
+      }
+
+      /* The parent page sizes the frame to the content; never show an
+         inner scrollbar while it catches up. */
+      html.embedded,
+      html.embedded body {
+        overflow: hidden;
       }
 
       html.embedded body {
@@ -119,11 +137,15 @@
 
       @media (min-width: 993px) {
         .shell {
-          grid-template-columns: 0.78fr 1.22fr;
+          grid-template-columns: minmax(0, 400px) minmax(0, 680px);
+          justify-content: space-between;
+          gap: 40px;
         }
       }
 
       .intro {
+        display: grid;
+        gap: 12px;
         padding: 8px 0;
       }
 
@@ -135,7 +157,7 @@
       }
 
       h1 {
-        margin: 12px 0;
+        margin: 0;
         font-size: 24px;
         font-weight: 660;
         line-height: 1.2;
@@ -144,7 +166,6 @@
 
       .lead {
         margin: 0;
-        max-width: 500px;
         color: var(--text-secondary);
         font-size: 16px;
         line-height: 1.5;
@@ -158,6 +179,8 @@
       }
 
       .panel-head {
+        display: grid;
+        gap: 8px;
         border-bottom: 1px solid var(--border);
         padding: 16px 24px;
       }
@@ -171,9 +194,9 @@
       }
 
       .panel-head p {
-        margin: 8px 0 0;
+        margin: 0;
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: 13px;
         line-height: 1.5;
       }
 
@@ -188,28 +211,35 @@
         gap: 16px;
       }
 
-      @media (min-width: 640px) {
+      @media (min-width: 560px) {
         .grid.two {
           grid-template-columns: 1fr 1fr;
         }
       }
 
-      .field-col {
-        display: flex;
-        flex-direction: column;
-      }
-
-      label {
+      /* Field: label, control and one line of help or error, 8px apart. */
+      .field {
         display: grid;
         gap: 8px;
+        align-content: start;
+        min-width: 0;
+      }
+
+      label,
+      .field-label {
         color: var(--text-primary);
         font-size: 14px;
         font-weight: 500;
         line-height: 1.25;
       }
 
+      .required {
+        color: var(--text-tertiary);
+        font-weight: 400;
+      }
+
       /* Inputs: 1px border, radius sm, 12px side padding. Focus only
-         recolours the border. */
+         recolours the border; errors use the danger text step. */
       input,
       select,
       textarea {
@@ -248,8 +278,8 @@
         background-size: 16px;
       }
 
-      /* The required select reads muted until a value is chosen. */
-      select:invalid {
+      /* An unchosen select reads muted, like a placeholder. */
+      select.is-empty {
         color: var(--text-muted);
       }
 
@@ -269,6 +299,10 @@
         border-color: var(--primary);
       }
 
+      [aria-invalid="true"] {
+        border-color: var(--danger-text);
+      }
+
       .hint {
         margin: 0;
         color: var(--text-tertiary);
@@ -276,60 +310,68 @@
         line-height: 1.25;
       }
 
+      /* Validation: 12px danger text with a 16px ✕ icon. */
+      .field-error {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+        margin: 0;
+        color: var(--danger-text);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .field-error:empty {
+        display: none;
+      }
+
+      .field-error::before {
+        content: "";
+        flex: none;
+        width: 16px;
+        height: 16px;
+        margin-top: -1px;
+        background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m15 9-6 6'/%3E%3Cpath d='m9 9 6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m15 9-6 6'/%3E%3Cpath d='m9 9 6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+      }
+
+      /* Attachments: dashed drop area, the picker reads as a secondary
+         button, picked files are compact rows. */
       .file-box {
         display: grid;
-        gap: 8px;
+        gap: 12px;
         border: 1px dashed var(--border);
         border-radius: var(--radius-lg);
         background: var(--surface-sunken);
         padding: 16px;
       }
 
-      .file-box-label {
-        color: var(--text-primary);
-        font-size: 14px;
-        font-weight: 500;
-        line-height: 1.25;
+      .file-box.has-error {
+        border-color: var(--danger-text);
       }
 
-      input[type="file"] {
-        min-height: 0;
-        border: 0;
-        padding: 0;
-        background: transparent;
-        color: var(--text-tertiary);
-        font-size: 13px;
+      .file-picker {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
       }
 
-      input[type="file"]:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
-      }
-
-      /* The file picker button looks like a secondary button. */
-      input[type="file"]::file-selector-button {
-        height: var(--control-height);
-        margin-right: 12px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        background: var(--surface);
-        color: var(--text-tertiary);
-        cursor: pointer;
-        font: 500 13px/1 var(--font);
-        padding: 0 12px;
-        transition:
-          background-color var(--transition),
-          color var(--transition);
-      }
-
-      input[type="file"]::file-selector-button:hover {
-        background: var(--surface-hover);
-        color: var(--text-primary);
+      .file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
       }
 
       .file-list {
         display: grid;
         gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
       }
 
       .file-list:empty {
@@ -339,26 +381,24 @@
       .file-item {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 8px;
-        min-height: calc(var(--control-height) + 8px);
+        min-height: var(--control-height);
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
         background: var(--surface);
-        padding: 0 4px 0 12px;
+        padding: 0 0 0 12px;
         color: var(--text-primary);
-        font-size: 14px;
+        font-size: 13px;
       }
 
-      .file-item-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-        overflow: hidden;
+      .file-item > svg {
+        width: 16px;
+        height: 16px;
+        color: var(--text-tertiary);
       }
 
       .file-item-name {
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -366,14 +406,45 @@
 
       .file-item-size {
         flex-shrink: 0;
+        margin-left: auto;
         color: var(--text-tertiary);
         font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Neutral notice: surface-sunken, no outline; only the icon is
+         coloured. */
+      .notice {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        border-radius: var(--radius-lg);
+        background: var(--surface-sunken);
+        padding: 10px 12px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .notice svg {
+        width: 16px;
+        height: 16px;
+        margin-top: 2px;
+        color: var(--danger-text);
+      }
+
+      .notice strong {
+        display: block;
+        color: var(--text-primary);
+        font-weight: 500;
       }
 
       .actions {
         display: flex;
         flex-direction: column;
         gap: 12px;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
       }
 
       @media (min-width: 560px) {
@@ -384,8 +455,9 @@
         }
       }
 
-      /* Primary button: 32px (44px on touch), radius sm, 13px/500. */
-      button {
+      /* Buttons: 32px (44px on touch), radius sm, 13px/500, 12px padding. */
+      button,
+      .button {
         display: inline-flex;
         flex-shrink: 0;
         align-items: center;
@@ -405,6 +477,12 @@
           color var(--transition);
       }
 
+      button svg,
+      .button svg {
+        width: 16px;
+        height: 16px;
+      }
+
       button:hover {
         background: var(--primary-hover);
       }
@@ -413,7 +491,8 @@
         background: var(--primary-active);
       }
 
-      button:focus-visible {
+      button:focus-visible,
+      .file-input:focus-visible + .button {
         outline: 2px solid var(--primary);
         outline-offset: 2px;
       }
@@ -423,26 +502,47 @@
         opacity: 0.5;
       }
 
-      /* Ghost icon button for removing a picked file. */
-      .file-item-remove {
+      /* Secondary: transparent, 1px border, tertiary text. */
+      .button.secondary,
+      button.secondary {
+        border-color: var(--border);
+        background: var(--surface);
+        color: var(--text-tertiary);
+      }
+
+      .button.secondary:hover,
+      button.secondary:hover,
+      button.secondary.copied {
+        background: var(--surface-hover);
+        color: var(--text-primary);
+      }
+
+      .button.secondary:active,
+      button.secondary:active {
+        background: var(--surface-active);
+      }
+
+      /* Ghost icon button. */
+      button.icon {
         width: var(--control-height);
         padding: 0;
         background: transparent;
         color: var(--text-tertiary);
       }
 
-      .file-item-remove:hover {
+      button.icon:hover {
         background: var(--surface-hover);
         color: var(--danger-text);
       }
 
-      .file-item-remove:active {
+      button.icon:active {
         background: var(--surface-active);
       }
 
-      .file-item-remove svg {
-        width: 16px;
-        height: 16px;
+      @media (max-width: 520px) {
+        .actions button {
+          width: 100%;
+        }
       }
 
       /* Spinner: 2px ring with one open quarter, one turn per second. */
@@ -464,47 +564,7 @@
       .spinner-ring {
         width: 32px;
         height: 32px;
-        color: var(--primary);
-      }
-
-      /* Notice: neutral bordered note; status colour only on the dot and,
-         for errors, the short text. */
-      .notice {
-        display: none;
-        gap: 8px;
-        align-items: flex-start;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 12px;
-        color: var(--text-secondary);
-        font-size: 14px;
-        line-height: 1.5;
-      }
-
-      .notice.show {
-        display: flex;
-      }
-
-      .notice::before {
-        content: "";
-        flex: none;
-        width: 8px;
-        height: 8px;
-        margin-top: 6.5px;
-        border-radius: 9999px;
-        background: var(--text-tertiary);
-      }
-
-      .notice.error {
-        color: var(--danger-text);
-      }
-
-      .notice.error::before {
-        background: var(--danger);
-      }
-
-      .notice.success::before {
-        background: var(--success);
+        color: var(--text-tertiary);
       }
 
       /* Overlays: frosted mask (page background at 90%), dialog enters from
@@ -568,11 +628,12 @@
       .loading-subtitle {
         margin-top: 8px;
         color: var(--text-tertiary);
-        font-size: 14px;
+        font-size: 13px;
         line-height: 1.5;
       }
 
-      /* Success dialog: 512px, header and footer separated by borders. */
+      /* Success dialog: 512px; title-lg and a label-md subtitle in the
+         header, actions right-aligned in the footer. */
       .modal-card {
         max-width: 512px;
         max-height: calc(100vh - 48px);
@@ -580,6 +641,8 @@
       }
 
       .modal-header {
+        display: grid;
+        gap: 4px;
         border-bottom: 1px solid var(--border);
         padding: 16px;
       }
@@ -596,11 +659,18 @@
         font-feature-settings: var(--title-features);
       }
 
-      .modal-title-icon {
-        flex: none;
-        width: 16px;
-        height: 16px;
-        color: var(--success);
+      .modal-title svg {
+        width: 20px;
+        height: 20px;
+        color: var(--success-text);
+      }
+
+      .modal-subtitle {
+        margin: 0;
+        color: var(--text-tertiary);
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.25;
       }
 
       .modal-body {
@@ -610,6 +680,10 @@
       }
 
       .modal-case-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
         border-radius: var(--radius-lg);
         background: var(--surface-sunken);
         padding: 12px 16px;
@@ -617,17 +691,10 @@
 
       .modal-case-label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         color: var(--text-tertiary);
         font-size: 12px;
         line-height: 1.25;
-      }
-
-      .modal-case-id-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
       }
 
       .modal-case-id {
@@ -637,23 +704,6 @@
         font-weight: 660;
         font-variant-numeric: tabular-nums;
         word-break: break-all;
-      }
-
-      /* Secondary button. */
-      .btn-copy {
-        border-color: var(--border);
-        background: var(--surface);
-        color: var(--text-tertiary);
-      }
-
-      .btn-copy:hover,
-      .btn-copy.copied {
-        background: var(--surface-hover);
-        color: var(--text-primary);
-      }
-
-      .btn-copy:active {
-        background: var(--surface-active);
       }
 
       .modal-desc {
@@ -702,64 +752,63 @@
     <main>
       <div class="shell">
         <section class="intro">
-          <div class="eyebrow">清華大學學生會 · 學權協力</div>
+          <p class="eyebrow">國立清華大學學生會 · 學生申訴協力系統</p>
           <h1>學生申訴送件</h1>
           <p class="lead">
-            請描述你遇到的狀況、期待協助方式與可佐證的資料。送出後，系統會寄出案件編號與專屬查詢連結。
+            請描述你遇到的狀況、期待的協助方式與可佐證的資料。送出後，系統會寄出案件編號與專屬查詢連結。
           </p>
         </section>
 
         <section class="form-panel">
           <div class="panel-head">
             <h2>申訴表單</h2>
-            <p>附件會安全存入學權組織的 Google Drive。請確認 email 正確，案件連結會寄到該信箱。</p>
+            <p>附件會存入學權組織的 Google Drive。請確認 email 正確，案件連結會寄到該信箱。</p>
           </div>
 
-          <form id="caseForm">
-            <div id="notice" class="notice"></div>
-
+          <form id="caseForm" novalidate>
             <div class="grid two">
-              <label>
-                電子郵件
-                <input name="email" type="email" autocomplete="email" required />
-              </label>
-              <div class="field-col">
-                <label>
-                  年級
-                  <select id="departmentSelect" name="department" required>
-                    <option value="">請選擇</option>
-                    <option>大一</option>
-                    <option>大二</option>
-                    <option>大三</option>
-                    <option>大四</option>
-                    <option>碩士</option>
-                    <option>博士</option>
-                    <option value="其他">其他</option>
-                  </select>
-                </label>
-                <div id="departmentOtherWrapper" style="display: none; margin-top: 8px;">
-                  <label>
-                    年級／身分說明
-                    <input
-                      id="departmentOther"
-                      name="departmentOther"
-                      type="text"
-                      placeholder="請填寫，例如：延畢、交換生、碩專班"
-                      maxlength="60"
-                    />
-                  </label>
+              <div class="field">
+                <label for="email">電子郵件</label>
+                <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-error" />
+                <p id="email-error" class="field-error" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="departmentSelect">年級</label>
+                <select id="departmentSelect" name="department" class="is-empty" required aria-describedby="departmentSelect-error">
+                  <option value="">請選擇</option>
+                  <option>大一</option>
+                  <option>大二</option>
+                  <option>大三</option>
+                  <option>大四</option>
+                  <option>碩士</option>
+                  <option>博士</option>
+                  <option value="其他">其他</option>
+                </select>
+                <p id="departmentSelect-error" class="field-error" role="alert"></p>
+                <div id="departmentOtherWrapper" class="field" hidden>
+                  <label for="departmentOther">年級／身分說明</label>
+                  <input
+                    id="departmentOther"
+                    name="departmentOther"
+                    type="text"
+                    placeholder="例如：延畢、交換生、碩專班"
+                    maxlength="60"
+                    aria-describedby="departmentOther-error"
+                  />
+                  <p id="departmentOther-error" class="field-error" role="alert"></p>
                 </div>
               </div>
             </div>
 
             <div class="grid two">
-              <label>
-                姓名
-                <input name="name" autocomplete="name" required />
-              </label>
-              <label>
-                申訴種類
-                <select name="category" required>
+              <div class="field">
+                <label for="name">姓名</label>
+                <input id="name" name="name" autocomplete="name" required aria-describedby="name-error" />
+                <p id="name-error" class="field-error" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="category">申訴種類</label>
+                <select id="category" name="category" class="is-empty" required aria-describedby="category-error">
                   <option value="">請選擇</option>
                   <option>課務與教學</option>
                   <option>宿舍與生活</option>
@@ -767,28 +816,45 @@
                   <option>校園安全</option>
                   <option>其他</option>
                 </select>
-              </label>
+                <p id="category-error" class="field-error" role="alert"></p>
+              </div>
             </div>
 
-            <label>
-              申訴問題
-              <textarea name="subject" required minlength="8" placeholder="請描述事件、時間、相關單位與目前遇到的困難。"></textarea>
-            </label>
+            <div class="field">
+              <label for="subject">申訴問題</label>
+              <textarea id="subject" name="subject" required minlength="8" placeholder="請描述事件、時間、相關單位與目前遇到的困難。" aria-describedby="subject-error"></textarea>
+              <p id="subject-error" class="field-error" role="alert"></p>
+            </div>
 
-            <label>
-              希望得到的處理方式
-              <textarea name="desiredOutcome" required placeholder="例如協助轉介、釐清規則、正式申訴、與單位溝通等。"></textarea>
-            </label>
+            <div class="field">
+              <label for="desiredOutcome">希望得到的處理方式</label>
+              <textarea id="desiredOutcome" name="desiredOutcome" required placeholder="例如協助轉介、釐清規則、正式申訴、與單位溝通等。" aria-describedby="desiredOutcome-error"></textarea>
+              <p id="desiredOutcome-error" class="field-error" role="alert"></p>
+            </div>
 
-            <div class="file-box">
-              <span class="file-box-label">上傳檔案</span>
-              <input id="attachments" name="attachments" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
-              <p class="hint">支援 PDF、Word、PNG、JPG，可複選，最多 10 個檔案，每個檔案上限 8MB。</p>
-              <div id="fileList" class="file-list"></div>
+            <div class="field">
+              <span class="field-label" id="attachments-label">附件 <span class="required">（選填）</span></span>
+              <div id="fileBox" class="file-box">
+                <div class="file-picker">
+                  <input id="attachments" class="file-input" name="attachments" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" aria-labelledby="attachments-label" aria-describedby="attachments-hint attachments-error" />
+                  <label for="attachments" class="button secondary">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13v8"/><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="m8 17 4-4 4 4"/></svg>
+                    選擇檔案
+                  </label>
+                  <p id="attachments-hint" class="hint">PDF、Word、PNG、JPG，最多 10 個檔案，每個上限 8MB。</p>
+                </div>
+                <ul id="fileList" class="file-list"></ul>
+              </div>
+              <p id="attachments-error" class="field-error" role="alert"></p>
+            </div>
+
+            <div id="formNotice" class="notice" role="alert" hidden>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+              <div><strong>申訴尚未送出</strong><span id="formNoticeText"></span></div>
             </div>
 
             <div class="actions">
-              <p class="hint">送出前請再次確認內容；送出後可用 email 中的案件連結補充文字資料。</p>
+              <p class="hint">送出前請再次確認內容；送出後可用 email 中的案件連結補充說明與檔案。</p>
               <button id="submitButton" type="submit">
                 <span id="submitButtonText">送出申訴</span>
               </button>
@@ -800,11 +866,11 @@
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
-      <div class="loading-card">
+      <div class="loading-card" role="status">
         <div class="spinner-ring"></div>
         <div class="loading-text">
           <div class="loading-title">正在送出申訴案件</div>
-          <div class="loading-subtitle">正在處理檔案與送出資料，請稍候...</div>
+          <div class="loading-subtitle">正在上傳檔案與建立案件，請勿關閉頁面。</div>
         </div>
       </div>
     </div>
@@ -814,47 +880,48 @@
       <div class="modal-card">
         <div class="modal-header">
           <h3 id="modalTitle" class="modal-title">
-            <svg class="modal-title-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <path d="m9 12 2 2 4-4"></path>
             </svg>
-            申訴案件已成功建立
+            已建立申訴案件
           </h3>
+          <p class="modal-subtitle">請保存案件編號，之後聯絡學權幹部時會用到。</p>
         </div>
 
         <div class="modal-body">
           <div class="modal-case-box">
-            <span class="modal-case-label">案件編號</span>
-            <div class="modal-case-id-row">
+            <div>
+              <span class="modal-case-label">案件編號</span>
               <code id="modalCaseId" class="modal-case-id">CV-XXXXX</code>
-              <button type="button" id="copyIdBtn" class="btn-copy" title="複製案件編號">
-                <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                <span id="copyBtnText">複製</span>
-              </button>
             </div>
+            <button type="button" id="copyIdBtn" class="secondary" title="複製案件編號">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copyBtnText">複製</span>
+            </button>
           </div>
 
           <p class="modal-desc">
-            專屬查詢連結與確認信已發送至 <strong id="modalEmailText" class="modal-highlight-email"></strong>。<br />
-            後續處理進度將透過 email 通知，請務必查收信箱（若未收到請檢查垃圾信匣）。
+            專屬查詢連結與確認信已寄到 <strong id="modalEmailText" class="modal-highlight-email"></strong>。後續進度也會以 email 通知；如果沒收到，請檢查垃圾信匣。
           </p>
         </div>
 
         <div class="modal-actions">
-          <button type="button" id="modalCloseBtn" class="btn-modal-primary">我知道了</button>
+          <button type="button" id="modalCloseBtn">我知道了</button>
         </div>
       </div>
     </div>
 
     <script>
       const form = document.querySelector("#caseForm");
-      const notice = document.querySelector("#notice");
+      const formNotice = document.querySelector("#formNotice");
+      const formNoticeText = document.querySelector("#formNoticeText");
       const submitButton = document.querySelector("#submitButton");
-      const submitButtonText = document.querySelector("#submitButtonText");
       const attachments = document.querySelector("#attachments");
+      const fileBox = document.querySelector("#fileBox");
       const fileList = document.querySelector("#fileList");
       const loadingOverlay = document.querySelector("#loadingOverlay");
       const successModal = document.querySelector("#successModal");
@@ -867,21 +934,8 @@
       const departmentOtherWrapper = document.querySelector("#departmentOtherWrapper");
       const departmentOther = document.querySelector("#departmentOther");
       const maxFileBytes = 8 * 1024 * 1024;
-
-      if (departmentSelect) {
-        departmentSelect.addEventListener("change", () => {
-          if (departmentSelect.value === "其他") {
-            departmentOtherWrapper.style.display = "block";
-            departmentOther.required = true;
-            departmentOther.focus();
-          } else {
-            departmentOtherWrapper.style.display = "none";
-            departmentOther.required = false;
-            departmentOther.value = "";
-          }
-          reportFrameHeight();
-        });
-      }
+      const maxFileCount = 10;
+      let selectedFiles = [];
 
       function reportFrameHeight() {
         if (window.self === window.top) return;
@@ -899,46 +953,131 @@
         window.addEventListener("load", reportFrameHeight);
         new ResizeObserver(reportFrameHeight).observe(document.documentElement);
         requestAnimationFrame(reportFrameHeight);
+        // The embedding page asks again if it hydrated after this frame loaded.
+        window.addEventListener("message", (event) => {
+          if (event.data && event.data.type === "campusvoice:request-height") reportFrameHeight();
+        });
       }
 
-      const maxFileCount = 10;
-      let selectedFiles = [];
+      // Field errors say what is wrong and how to fix it.
+      function setFieldError(id, message) {
+        const error = document.getElementById(`${id}-error`);
+        const control = document.getElementById(id);
+        if (error) error.textContent = message || "";
+        if (id === "attachments") {
+          fileBox.classList.toggle("has-error", Boolean(message));
+        } else if (control) {
+          if (message) control.setAttribute("aria-invalid", "true");
+          else control.removeAttribute("aria-invalid");
+        }
+        reportFrameHeight();
+      }
+
+      function fieldMessage(control) {
+        const value = control.value.trim();
+        switch (control.id) {
+          case "email":
+            if (!value) return "請填寫電子郵件，案件連結會寄到這個信箱。";
+            if (!value.includes("@")) return "缺少 @，例如 name@gapp.nthu.edu.tw。";
+            if (!control.validity.valid || !/@[^@\s]+\.[^@\s]+$/.test(value)) {
+              return "缺少網域結尾，例如 name@gapp.nthu.edu.tw。";
+            }
+            return "";
+          case "departmentSelect":
+            return value ? "" : "請選擇年級。";
+          case "departmentOther":
+            return value || !departmentOther.required ? "" : "請說明年級或身分，例如：延畢、交換生。";
+          case "name":
+            return value ? "" : "請填寫姓名。";
+          case "category":
+            return value ? "" : "請選擇申訴種類。";
+          case "subject":
+            if (!value) return "請描述申訴問題。";
+            if (value.length < 8) return "申訴問題至少 8 個字，請補充事件、時間與相關單位。";
+            return "";
+          case "desiredOutcome":
+            return value ? "" : "請說明希望得到的處理方式。";
+          default:
+            return "";
+        }
+      }
+
+      const validatedFields = ["email", "departmentSelect", "departmentOther", "name", "category", "subject", "desiredOutcome"]
+        .map((id) => document.getElementById(id));
+
+      // Returns the first invalid control, after marking every invalid one.
+      function validateForm() {
+        let firstInvalid = null;
+        validatedFields.forEach((control) => {
+          const message = fieldMessage(control);
+          setFieldError(control.id, message);
+          if (message && !firstInvalid) firstInvalid = control;
+        });
+        return firstInvalid;
+      }
+
+      validatedFields.forEach((control) => {
+        const revalidate = () => {
+          if (control.getAttribute("aria-invalid") === "true") setFieldError(control.id, fieldMessage(control));
+        };
+        control.addEventListener("input", revalidate);
+        control.addEventListener("change", revalidate);
+      });
+
+      document.querySelectorAll("select").forEach((select) => {
+        select.addEventListener("change", () => select.classList.toggle("is-empty", !select.value));
+      });
+
+      departmentSelect.addEventListener("change", () => {
+        const other = departmentSelect.value === "其他";
+        departmentOtherWrapper.hidden = !other;
+        departmentOther.required = other;
+        if (other) {
+          departmentOther.focus();
+        } else {
+          departmentOther.value = "";
+          setFieldError("departmentOther", "");
+        }
+        reportFrameHeight();
+      });
+
+      function formatSize(bytes) {
+        if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      const fileIcon =
+        '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>';
+      const removeIcon =
+        '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
       function renderFileList() {
         fileList.innerHTML = "";
         selectedFiles.forEach((file, index) => {
-          const item = document.createElement("div");
+          const item = document.createElement("li");
           item.className = "file-item";
-
-          const info = document.createElement("div");
-          info.className = "file-item-info";
+          item.innerHTML = fileIcon;
 
           const nameSpan = document.createElement("span");
           nameSpan.className = "file-item-name";
           nameSpan.textContent = file.name;
+          nameSpan.title = file.name;
 
           const sizeSpan = document.createElement("span");
           sizeSpan.className = "file-item-size";
-          sizeSpan.textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-
-          info.appendChild(nameSpan);
-          info.appendChild(sizeSpan);
+          sizeSpan.textContent = formatSize(file.size);
 
           const removeBtn = document.createElement("button");
           removeBtn.type = "button";
-          removeBtn.className = "file-item-remove";
+          removeBtn.className = "icon";
           removeBtn.setAttribute("aria-label", `移除 ${file.name}`);
-          removeBtn.setAttribute("title", "移除此檔案");
-          removeBtn.innerHTML =
-            '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+          removeBtn.innerHTML = removeIcon;
           removeBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            e.stopPropagation();
             removeFile(index);
           });
 
-          item.appendChild(info);
-          item.appendChild(removeBtn);
+          item.append(nameSpan, sizeSpan, removeBtn);
           fileList.appendChild(item);
         });
         reportFrameHeight();
@@ -946,17 +1085,18 @@
 
       function removeFile(index) {
         selectedFiles.splice(index, 1);
+        setFieldError("attachments", "");
         renderFileList();
       }
 
       attachments.addEventListener("change", () => {
-        setNotice("", "");
+        setFieldError("attachments", "");
         const newFiles = Array.from(attachments.files || []);
         if (!newFiles.length) return;
 
         const oversize = newFiles.find((file) => file.size > maxFileBytes);
         if (oversize) {
-          setNotice(`「${oversize.name}」超過 8MB 限制，請縮減大小後再上傳。`, "error");
+          setFieldError("attachments", `「${oversize.name}」超過 8MB，請壓縮或分割後再上傳。`);
           attachments.value = "";
           return;
         }
@@ -968,7 +1108,7 @@
         }
 
         if (selectedFiles.length > maxFileCount) {
-          setNotice(`最多上傳 ${maxFileCount} 個檔案，已為您保留前 ${maxFileCount} 個。`, "error");
+          setFieldError("attachments", `最多上傳 ${maxFileCount} 個檔案，已保留前 ${maxFileCount} 個。`);
           selectedFiles = selectedFiles.slice(0, maxFileCount);
         }
 
@@ -981,7 +1121,7 @@
           loadingOverlay.classList.add("active");
           loadingOverlay.setAttribute("aria-hidden", "false");
           submitButton.disabled = true;
-          submitButton.innerHTML = `<span class="btn-spinner"></span><span>送件中...</span>`;
+          submitButton.innerHTML = `<span class="btn-spinner"></span><span>送件中…</span>`;
         } else {
           loadingOverlay.classList.remove("active");
           loadingOverlay.setAttribute("aria-hidden", "true");
@@ -992,9 +1132,10 @@
 
       function openSuccessModal(publicId, email) {
         modalCaseId.textContent = publicId;
-        modalEmailText.textContent = email || "您的電子信箱";
+        modalEmailText.textContent = email || "你的電子信箱";
         successModal.classList.add("active");
         successModal.setAttribute("aria-hidden", "false");
+        modalCloseBtn.focus();
         reportFrameHeight();
       }
 
@@ -1032,28 +1173,30 @@
             document.body.removeChild(fallbackInput);
           }
           copyIdBtn.classList.add("copied");
-          copyBtnText.textContent = "已複製！";
+          copyBtnText.textContent = "已複製";
           setTimeout(() => {
             copyIdBtn.classList.remove("copied");
             copyBtnText.textContent = "複製";
           }, 2000);
         } catch (e) {
-          copyBtnText.textContent = "複製失敗";
+          copyBtnText.textContent = "無法複製";
         }
       });
 
+      // Submission failures that are not tied to one field.
+      function setNotice(message) {
+        formNotice.hidden = !message;
+        formNoticeText.textContent = message || "";
+        reportFrameHeight();
+      }
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        setNotice("", "");
+        setNotice("");
 
-        if (selectedFiles.length > maxFileCount) {
-          setNotice(`最多上傳 ${maxFileCount} 個檔案。`, "error");
-          return;
-        }
-
-        const oversize = selectedFiles.find((file) => file.size > maxFileBytes);
-        if (oversize) {
-          setNotice(`${oversize.name} 超過 8MB 限制。`, "error");
+        const firstInvalid = validateForm();
+        if (firstInvalid) {
+          firstInvalid.focus();
           return;
         }
 
@@ -1062,13 +1205,7 @@
         let submittedDepartment = String(data.get("department") || "").trim();
 
         if (submittedDepartment === "其他") {
-          const otherText = String(data.get("departmentOther") || "").trim();
-          if (!otherText) {
-            setNotice("請填寫年級／身分說明。", "error");
-            if (departmentOther) departmentOther.focus();
-            return;
-          }
-          submittedDepartment = `其他, ${otherText}`;
+          submittedDepartment = `其他, ${String(data.get("departmentOther") || "").trim()}`;
         }
 
         showLoading(true);
@@ -1088,37 +1225,28 @@
             .withSuccessHandler((result) => {
               showLoading(false);
               form.reset();
-              if (departmentOtherWrapper) {
-                departmentOtherWrapper.style.display = "none";
-              }
-              if (departmentOther) {
-                departmentOther.required = false;
-                departmentOther.value = "";
-              }
+              document.querySelectorAll("select").forEach((select) => select.classList.add("is-empty"));
+              departmentOtherWrapper.hidden = true;
+              departmentOther.required = false;
               selectedFiles = [];
               renderFileList();
               openSuccessModal(result.publicId, submittedEmail);
             })
             .withFailureHandler((error) => {
               showLoading(false);
-              setNotice(error && error.message ? error.message : "送件失敗，請稍後再試。", "error");
+              setNotice(error && error.message ? error.message : "案件服務暫時無法回應，請稍後再送出一次。");
             })
             .submitPublicCase(payload);
         } catch (error) {
           showLoading(false);
-          setNotice(error.message || "檔案讀取失敗。", "error");
+          setNotice(error.message || "檔案讀取失敗，請重新選擇檔案後再送出。");
         }
       });
-
-      function setNotice(message, type) {
-        notice.className = message ? `notice show ${type}` : "notice";
-        notice.textContent = message;
-      }
 
       function filePayload(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onerror = () => reject(new Error(`${file.name} 讀取失敗。`));
+          reader.onerror = () => reject(new Error(`「${file.name}」讀取失敗，請重新選擇這個檔案。`));
           reader.onload = () => {
             const base64 = String(reader.result).split(",")[1];
             resolve({

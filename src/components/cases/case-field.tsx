@@ -6,11 +6,13 @@ export function CaseField({
   value,
   multiline,
   className,
+  children,
 }: {
   label: string;
-  value: string | null | undefined;
+  value?: string | null;
   multiline?: boolean;
   className?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
@@ -21,7 +23,7 @@ export function CaseField({
           multiline ? "whitespace-pre-wrap text-text-secondary" : "text-text-primary",
         )}
       >
-        {value || "無"}
+        {children ?? (value || "無")}
       </dd>
     </div>
   );
