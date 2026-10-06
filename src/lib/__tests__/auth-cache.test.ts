@@ -13,13 +13,17 @@ vi.mock("@/lib/gas", () => ({
   callGas: vi.fn(),
 }));
 
+// auth() is overloaded; tests only use the no-argument session form.
+const mockedAuth = () =>
+  vi.mocked(authModule.auth as unknown as () => Promise<Session | null>);
+
 describe("getCurrentStaff role caching", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("returns cached role from session directly without calling GAS", async () => {
-    vi.mocked(authModule.auth).mockResolvedValue({
+    mockedAuth().mockResolvedValue({
       user: {
         email: "test@example.com",
         role: "minister",
@@ -38,7 +42,7 @@ describe("getCurrentStaff role caching", () => {
   });
 
   it("falls back to callGas when session has no cached role", async () => {
-    vi.mocked(authModule.auth).mockResolvedValue({
+    mockedAuth().mockResolvedValue({
       user: {
         email: "test@example.com",
       },
@@ -62,7 +66,7 @@ describe("getCurrentStaff role caching", () => {
   });
 
   it("returns null when user is not staff even after GAS fallback", async () => {
-    vi.mocked(authModule.auth).mockResolvedValue({
+    mockedAuth().mockResolvedValue({
       user: {
         email: "student@example.com",
       },
