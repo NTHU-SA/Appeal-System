@@ -1,13 +1,14 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { KeyRound, LogOut, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
+import { KeyRound, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 
 import { auth } from "@/auth";
 import { getCurrentStaff } from "@/lib/auth";
 import { signInWithGoogle, signOut } from "@/lib/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -21,39 +22,36 @@ export default async function LoginPage() {
   const userEmail = session?.user?.email;
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div
-            className={`mb-2 flex h-10 w-10 items-center justify-center rounded-md ${
-              userEmail
-                ? "bg-destructive text-destructive-foreground"
-                : "bg-primary text-primary-foreground"
-            }`}
-          >
-            {userEmail ? (
-              <ShieldAlert className="h-5 w-5" />
-            ) : (
-              <ShieldCheck className="h-5 w-5" />
-            )}
+    <main className="flex flex-1 items-center justify-center px-6 py-12">
+      <Card className="w-full max-w-md gap-6 py-6">
+        <CardHeader className="gap-4 px-6">
+          <Image
+            src="/logo-square.png"
+            alt=""
+            width={40}
+            height={40}
+            className="size-10 rounded-sm"
+          />
+          <div className="flex flex-col gap-1">
+            <h1 className="text-title-lg text-text-primary">清華大學學生申訴協力系統</h1>
+            <p className="text-body-md text-text-tertiary">管理員／幹部後台登入</p>
           </div>
-          <CardTitle>清華大學學生申訴協力系統</CardTitle>
-          <CardDescription>管理員／幹部後台登入</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-4 px-6">
           {userEmail ? (
-            <div className="space-y-4">
+            <>
               <Alert variant="destructive">
-                <AlertTitle className="font-semibold">尚未開通後台權限</AlertTitle>
-                <AlertDescription className="mt-1.5 space-y-2 text-xs leading-relaxed">
+                <ShieldAlert />
+                <AlertTitle>尚未開通後台權限</AlertTitle>
+                <AlertDescription>
                   <p>
                     目前登入帳號：
-                    <span className="block font-mono font-medium text-foreground">
+                    <span className="block font-medium break-all text-text-primary">
                       {userEmail}
                     </span>
                   </p>
                   <p>
-                    此 Google 帳號尚未被加入後台成員名單。請聯絡學權部部長或管理員將您的帳號加入 Google Sheets 的 <span className="font-mono">Members</span> 工作表。
+                    此 Google 帳號尚未被加入後台成員名單。請聯絡學權部部長或管理員將您的帳號加入 Google Sheets 的 <span className="font-medium text-text-primary">Members</span> 工作表。
                   </p>
                 </AlertDescription>
               </Alert>
@@ -61,23 +59,23 @@ export default async function LoginPage() {
               <div className="flex flex-col gap-2">
                 <Button asChild className="w-full">
                   <Link href="/dashboard">
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw />
                     已加入名單？重新檢查權限
                   </Link>
                 </Button>
                 <form action={signOut} className="w-full">
                   <input type="hidden" name="redirectTo" value="/login" />
-                  <Button variant="outline" className="w-full">
-                    <LogOut className="h-4 w-4" />
+                  <Button variant="secondary" className="w-full">
+                    <LogOut />
                     登出 / 切換其他 Google 帳號
                   </Button>
                 </form>
               </div>
-            </div>
+            </>
           ) : (
             <form action={signInWithGoogle}>
               <Button className="w-full">
-                <KeyRound className="h-4 w-4" />
+                <KeyRound />
                 使用 Google 登入
               </Button>
             </form>

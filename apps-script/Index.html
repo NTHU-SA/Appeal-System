@@ -4,24 +4,58 @@
     <base target="_top" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Inter, loaded without blocking first paint; system-ui covers the gap. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
     <script>
       if (window.self !== window.top) {
         document.documentElement.classList.add("embedded");
       }
     </script>
     <style>
+      /*
+       * Design tokens: DESIGN.md (Neutral Tool UI), light theme only.
+       * The form runs inside Google's sandboxed frames and cannot follow the
+       * parent page theme, so the Next.js page shows it in a light panel.
+       */
       :root {
         color-scheme: light;
-        --bg: #f6f3ee;
-        --surface: #fffdfa;
-        --ink: #20201d;
-        --muted: #6f6a61;
-        --line: #ded8cf;
-        --primary: #37645a;
-        --primary-strong: #21483f;
-        --accent: #b45f4d;
-        --good: #2d6b4f;
-        --bad: #a13737;
+        --primary: #6e619c;
+        --primary-hover: #5d4f8b;
+        --primary-active: #4d4076;
+        --on-primary: #ffffff;
+        --background: #ffffff;
+        --surface: #ffffff;
+        --surface-sunken: #f3f3f7;
+        --surface-hover: #f3f3f7;
+        --surface-active: #dcdbe6;
+        --border: #2d26501f;
+        --text-primary: #303031;
+        --text-secondary: #4d4d4e;
+        --text-tertiary: #6c6c6d;
+        --text-muted: #8a8b8c;
+        --success: #10b981;
+        --danger: #dc2626;
+        --danger-text: #b91c1c;
+        --radius-sm: 4px;
+        --radius-lg: 8px;
+        /* 32px controls; touch targets grow to 44px. */
+        --control-height: 32px;
+        --font: "Inter", system-ui, sans-serif;
+        --title-features: "cv05", "cv06", "cv12", "cv13", "ss07";
+        --transition: 100ms ease-in-out;
+      }
+
+      @media (pointer: coarse) {
+        :root {
+          --control-height: 44px;
+        }
       }
 
       * {
@@ -31,24 +65,22 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background:
-          linear-gradient(135deg, rgba(55, 100, 90, 0.11), transparent 32rem),
-          linear-gradient(315deg, rgba(180, 95, 77, 0.14), transparent 28rem),
-          var(--bg);
-        color: var(--ink);
-        font-family:
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
+        background: var(--background);
+        color: var(--text-primary);
+        font: 400 14px/1.5 var(--font);
+        -webkit-font-smoothing: antialiased;
       }
 
       main {
         width: min(1080px, 100%);
         margin: 0 auto;
-        padding: 32px 18px;
+        padding: 32px 24px;
+      }
+
+      @media (min-width: 993px) {
+        main {
+          padding: 40px;
+        }
       }
 
       html.embedded body {
@@ -73,7 +105,6 @@
       html.embedded .form-panel {
         border: 0;
         background: transparent;
-        box-shadow: none;
       }
 
       html.embedded form {
@@ -86,78 +117,75 @@
         align-items: start;
       }
 
-      @media (min-width: 920px) {
+      @media (min-width: 993px) {
         .shell {
           grid-template-columns: 0.78fr 1.22fr;
         }
       }
 
       .intro {
-        padding: 10px 0;
+        padding: 8px 0;
       }
 
       .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(255, 253, 250, 0.68);
-        padding: 7px 12px;
-        color: var(--muted);
-        font-size: 14px;
+        margin: 0;
+        color: var(--text-tertiary);
+        font-size: 12px;
+        line-height: 1.25;
       }
 
       h1 {
-        margin: 20px 0 14px;
-        font-size: clamp(32px, 6vw, 58px);
-        line-height: 1.05;
-        letter-spacing: 0;
+        margin: 12px 0;
+        font-size: 24px;
+        font-weight: 660;
+        line-height: 1.2;
+        font-feature-settings: var(--title-features);
       }
 
       .lead {
         margin: 0;
-        max-width: 34rem;
-        color: var(--muted);
-        font-size: 17px;
-        line-height: 1.8;
+        max-width: 500px;
+        color: var(--text-secondary);
+        font-size: 16px;
+        line-height: 1.5;
       }
 
       .form-panel {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(255, 253, 250, 0.94);
-        box-shadow: 0 20px 70px rgba(61, 55, 48, 0.13);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
         overflow: hidden;
       }
 
       .panel-head {
-        border-bottom: 1px solid var(--line);
-        padding: 22px;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 24px;
       }
 
       .panel-head h2 {
         margin: 0;
-        font-size: 22px;
-        letter-spacing: 0;
+        font-size: 16px;
+        font-weight: 660;
+        line-height: 1;
+        font-feature-settings: var(--title-features);
       }
 
       .panel-head p {
         margin: 8px 0 0;
-        color: var(--muted);
-        line-height: 1.65;
+        color: var(--text-secondary);
         font-size: 14px;
+        line-height: 1.5;
       }
 
       form {
         display: grid;
-        gap: 18px;
-        padding: 22px;
+        gap: 16px;
+        padding: 24px;
       }
 
       .grid {
         display: grid;
-        gap: 14px;
+        gap: 16px;
       }
 
       @media (min-width: 640px) {
@@ -174,69 +202,138 @@
       label {
         display: grid;
         gap: 8px;
-        color: var(--ink);
+        color: var(--text-primary);
         font-size: 14px;
-        font-weight: 650;
+        font-weight: 500;
+        line-height: 1.25;
       }
 
+      /* Inputs: 1px border, radius sm, 12px side padding. Focus only
+         recolours the border. */
       input,
       select,
       textarea {
         width: 100%;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #fff;
-        color: var(--ink);
-        font: inherit;
-        font-weight: 450;
-        padding: 12px 13px;
+        min-height: var(--control-height);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text-primary);
+        font: 400 14px/1.5 var(--font);
+        padding: 0 12px;
         outline: none;
-        transition:
-          border-color 160ms ease,
-          box-shadow 160ms ease;
+        transition: border-color var(--transition);
+      }
+
+      /* 16px text on touch devices keeps iOS from zooming on focus. */
+      @media (pointer: coarse) {
+        input,
+        select,
+        textarea {
+          font-size: 16px;
+        }
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      select {
+        appearance: none;
+        padding-right: 36px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c6c6d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+      }
+
+      /* The required select reads muted until a value is chosen. */
+      select:invalid {
+        color: var(--text-muted);
+      }
+
+      select option {
+        color: var(--text-primary);
       }
 
       textarea {
-        min-height: 136px;
+        min-height: 128px;
+        padding: 8px 12px;
         resize: vertical;
-        line-height: 1.65;
       }
 
       input:focus,
       select:focus,
       textarea:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(55, 100, 90, 0.16);
       }
 
       .hint {
-        margin: -3px 0 0;
-        color: var(--muted);
+        margin: 0;
+        color: var(--text-tertiary);
         font-size: 12px;
-        line-height: 1.6;
+        line-height: 1.25;
       }
 
       .file-box {
-        border: 1px dashed #c9bfb1;
-        border-radius: 8px;
-        background: #fbf7f1;
-        padding: 14px;
+        display: grid;
+        gap: 8px;
+        border: 1px dashed var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface-sunken);
+        padding: 16px;
       }
 
       .file-box-label {
-        display: block;
-        color: var(--ink);
+        color: var(--text-primary);
         font-size: 14px;
-        font-weight: 650;
-        margin-bottom: 8px;
+        font-weight: 500;
+        line-height: 1.25;
+      }
+
+      input[type="file"] {
+        min-height: 0;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: var(--text-tertiary);
+        font-size: 13px;
+      }
+
+      input[type="file"]:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      /* The file picker button looks like a secondary button. */
+      input[type="file"]::file-selector-button {
+        height: var(--control-height);
+        margin-right: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text-tertiary);
+        cursor: pointer;
+        font: 500 13px/1 var(--font);
+        padding: 0 12px;
+        transition:
+          background-color var(--transition),
+          color var(--transition);
+      }
+
+      input[type="file"]::file-selector-button:hover {
+        background: var(--surface-hover);
+        color: var(--text-primary);
       }
 
       .file-list {
         display: grid;
-        gap: 7px;
-        margin-top: 10px;
-        color: var(--muted);
-        font-size: 13px;
+        gap: 4px;
+      }
+
+      .file-list:empty {
+        display: none;
       }
 
       .file-item {
@@ -244,18 +341,19 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        background: #ffffff;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 6px 10px;
-        font-size: 13px;
-        color: var(--ink);
+        min-height: calc(var(--control-height) + 8px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        padding: 0 4px 0 12px;
+        color: var(--text-primary);
+        font-size: 14px;
       }
 
       .file-item-info {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         min-width: 0;
         overflow: hidden;
       }
@@ -264,43 +362,18 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-weight: 500;
       }
 
       .file-item-size {
         flex-shrink: 0;
-        color: var(--muted);
+        color: var(--text-tertiary);
         font-size: 12px;
-      }
-
-      .file-item-remove {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 24px;
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        border: 0;
-        border-radius: 4px;
-        background: transparent;
-        color: var(--muted);
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
-        flex-shrink: 0;
-        transition: background 140ms ease, color 140ms ease;
-      }
-
-      .file-item-remove:hover {
-        background: rgba(161, 55, 55, 0.12);
-        color: var(--bad);
       }
 
       .actions {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
       }
 
       @media (min-width: 560px) {
@@ -311,89 +384,167 @@
         }
       }
 
+      /* Primary button: 32px (44px on touch), radius sm, 13px/500. */
       button {
         display: inline-flex;
+        flex-shrink: 0;
         align-items: center;
         justify-content: center;
-        min-height: 46px;
-        border: 0;
-        border-radius: 8px;
-        background: var(--primary);
-        color: white;
-        cursor: pointer;
-        font: inherit;
-        font-weight: 720;
-        padding: 0 20px;
         gap: 8px;
+        height: var(--control-height);
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: var(--primary);
+        color: var(--on-primary);
+        cursor: pointer;
+        font: 500 13px/1 var(--font);
+        padding: 0 12px;
+        white-space: nowrap;
         transition:
-          background 160ms ease,
-          transform 160ms ease;
+          background-color var(--transition),
+          color var(--transition);
       }
 
       button:hover {
-        background: var(--primary-strong);
+        background: var(--primary-hover);
+      }
+
+      button:active {
+        background: var(--primary-active);
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
       }
 
       button:disabled {
         cursor: wait;
-        opacity: 0.75;
+        opacity: 0.5;
+      }
+
+      /* Ghost icon button for removing a picked file. */
+      .file-item-remove {
+        width: var(--control-height);
+        padding: 0;
+        background: transparent;
+        color: var(--text-tertiary);
+      }
+
+      .file-item-remove:hover {
+        background: var(--surface-hover);
+        color: var(--danger-text);
+      }
+
+      .file-item-remove:active {
+        background: var(--surface-active);
+      }
+
+      .file-item-remove svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Spinner: 2px ring with one open quarter, one turn per second. */
+      .btn-spinner,
+      .spinner-ring {
+        display: inline-block;
+        flex-shrink: 0;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
       }
 
       .btn-spinner {
-        display: inline-block;
-        width: 17px;
-        height: 17px;
-        border: 2.5px solid rgba(255, 255, 255, 0.35);
-        border-top-color: #ffffff;
-        border-radius: 50%;
-        animation: spin 0.75s linear infinite;
-        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
       }
 
+      .spinner-ring {
+        width: 32px;
+        height: 32px;
+        color: var(--primary);
+      }
+
+      /* Notice: neutral bordered note; status colour only on the dot and,
+         for errors, the short text. */
       .notice {
         display: none;
-        border-radius: 8px;
-        padding: 13px 14px;
-        line-height: 1.7;
+        gap: 8px;
+        align-items: flex-start;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 12px;
+        color: var(--text-secondary);
         font-size: 14px;
+        line-height: 1.5;
       }
 
       .notice.show {
-        display: block;
+        display: flex;
+      }
+
+      .notice::before {
+        content: "";
+        flex: none;
+        width: 8px;
+        height: 8px;
+        margin-top: 6.5px;
+        border-radius: 9999px;
+        background: var(--text-tertiary);
       }
 
       .notice.error {
-        border: 1px solid rgba(161, 55, 55, 0.25);
-        background: rgba(161, 55, 55, 0.08);
-        color: var(--bad);
+        color: var(--danger-text);
       }
 
-      .notice.success {
-        border: 1px solid rgba(45, 107, 79, 0.24);
-        background: rgba(45, 107, 79, 0.08);
-        color: var(--good);
+      .notice.error::before {
+        background: var(--danger);
       }
 
-      /* Loading Overlay */
-      .loading-overlay {
+      .notice.success::before {
+        background: var(--success);
+      }
+
+      /* Overlays: frosted mask (page background at 90%), dialog enters from
+         scale(0.9) over 150ms. */
+      .loading-overlay,
+      .modal-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(32, 32, 29, 0.45);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
+        z-index: 400;
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 999;
+        padding: 24px;
+        background: rgb(255 255 255 / 90%);
         opacity: 0;
         visibility: hidden;
-        transition: opacity 220ms ease, visibility 220ms ease;
-        padding: 16px;
+        transition:
+          opacity 150ms ease,
+          visibility 150ms ease;
       }
 
-      .loading-overlay.active {
+      .loading-overlay.active,
+      .modal-overlay.active {
         opacity: 1;
         visibility: visible;
+      }
+
+      .loading-card,
+      .modal-card {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        transform: scale(0.9);
+        transition: transform 150ms ease;
+      }
+
+      .loading-overlay.active .loading-card,
+      .modal-overlay.active .modal-card {
+        transform: scale(1);
       }
 
       .loading-card {
@@ -401,117 +552,75 @@
         flex-direction: column;
         align-items: center;
         gap: 16px;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 30px 32px;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
         max-width: 360px;
-        width: 100%;
+        padding: 24px;
         text-align: center;
-        animation: modal-pop 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      }
-
-      .spinner-ring {
-        width: 46px;
-        height: 46px;
-        border: 3.5px solid rgba(55, 100, 90, 0.18);
-        border-top-color: var(--primary);
-        border-radius: 50%;
-        animation: spin 0.85s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
       }
 
       .loading-title {
+        color: var(--text-primary);
         font-size: 16px;
-        font-weight: 700;
-        color: var(--ink);
+        font-weight: 660;
+        line-height: 1;
+        font-feature-settings: var(--title-features);
       }
 
       .loading-subtitle {
-        margin-top: 5px;
-        font-size: 13px;
-        color: var(--muted);
+        margin-top: 8px;
+        color: var(--text-tertiary);
+        font-size: 14px;
         line-height: 1.5;
       }
 
-      /* Success Modal */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(32, 32, 29, 0.52);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 240ms ease, visibility 240ms ease;
-        padding: 18px;
-      }
-
-      .modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-      }
-
+      /* Success dialog: 512px, header and footer separated by borders. */
       .modal-card {
-        position: relative;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 32px 28px 24px;
-        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2);
-        max-width: 480px;
-        width: 100%;
-        text-align: center;
-        transform: scale(0.92) translateY(10px);
-        transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+        max-width: 512px;
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
       }
 
-      .modal-overlay.active .modal-card {
-        transform: scale(1) translateY(0);
-      }
-
-      .modal-badge-success {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 16px;
-        border-radius: 50%;
-        background: rgba(45, 107, 79, 0.12);
-        color: var(--good);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1.5px solid rgba(45, 107, 79, 0.25);
-        animation: pulse-badge 2s infinite ease-in-out;
+      .modal-header {
+        border-bottom: 1px solid var(--border);
+        padding: 16px;
       }
 
       .modal-title {
-        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        color: var(--text-primary);
         font-size: 20px;
-        font-weight: 750;
-        color: var(--ink);
+        font-weight: 580;
+        line-height: 1.25;
+        font-feature-settings: var(--title-features);
+      }
+
+      .modal-title-icon {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        color: var(--success);
+      }
+
+      .modal-body {
+        display: grid;
+        gap: 16px;
+        padding: 16px;
       }
 
       .modal-case-box {
-        background: #f4efe6;
-        border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: var(--radius-lg);
+        background: var(--surface-sunken);
         padding: 12px 16px;
-        margin: 16px 0;
-        text-align: left;
       }
 
       .modal-case-label {
         display: block;
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        margin-bottom: 4px;
+        margin-bottom: 8px;
+        color: var(--text-tertiary);
+        font-size: 12px;
+        line-height: 1.25;
       }
 
       .modal-case-id-row {
@@ -522,64 +631,55 @@
       }
 
       .modal-case-id {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--primary-strong);
+        color: var(--text-primary);
+        font-family: var(--font);
+        font-size: 16px;
+        font-weight: 660;
+        font-variant-numeric: tabular-nums;
         word-break: break-all;
       }
 
+      /* Secondary button. */
       .btn-copy {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        min-height: 32px;
-        padding: 4px 10px;
-        font-size: 12px;
-        font-weight: 600;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: #ffffff;
-        color: var(--ink);
-        cursor: pointer;
-        transition: all 140ms ease;
+        border-color: var(--border);
+        background: var(--surface);
+        color: var(--text-tertiary);
       }
 
-      .btn-copy:hover {
-        background: #fdfbf7;
-        border-color: var(--primary);
-        color: var(--primary);
-      }
-
+      .btn-copy:hover,
       .btn-copy.copied {
-        background: rgba(45, 107, 79, 0.12);
-        border-color: var(--good);
-        color: var(--good);
+        background: var(--surface-hover);
+        color: var(--text-primary);
+      }
+
+      .btn-copy:active {
+        background: var(--surface-active);
       }
 
       .modal-desc {
-        font-size: 13.5px;
-        line-height: 1.65;
-        color: var(--muted);
-        margin: 0 0 20px;
-        text-align: left;
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.5;
       }
 
       .modal-highlight-email {
-        color: var(--ink);
-        font-weight: 600;
+        color: var(--text-primary);
+        font-weight: 500;
         word-break: break-all;
       }
 
       .modal-actions {
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
+        border-top: 1px solid var(--border);
+        padding: 16px;
       }
 
-      .btn-modal-primary {
-        width: 100%;
-        min-height: 44px;
-        font-size: 15px;
+      @media (max-width: 520px) {
+        .modal-actions button {
+          width: 100%;
+        }
       }
 
       @keyframes spin {
@@ -588,23 +688,12 @@
         }
       }
 
-      @keyframes modal-pop {
-        from {
-          opacity: 0;
-          transform: scale(0.92) translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
-      }
-
-      @keyframes pulse-badge {
-        0%, 100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.05);
+      /* Reduced motion: keep the fades, drop the scaling. */
+      @media (prefers-reduced-motion: reduce) {
+        .loading-card,
+        .modal-card {
+          transform: none !important;
+          transition: none;
         }
       }
     </style>
@@ -648,7 +737,7 @@
                     <option value="其他">其他</option>
                   </select>
                 </label>
-                <div id="departmentOtherWrapper" style="display: none; margin-top: 10px;">
+                <div id="departmentOtherWrapper" style="display: none; margin-top: 8px;">
                   <label>
                     年級／身分說明
                     <input
@@ -723,32 +812,36 @@
     <!-- Success Modal -->
     <div id="successModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-card">
-        <div class="modal-badge-success">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 6L9 17l-5-5"/>
-          </svg>
+        <div class="modal-header">
+          <h3 id="modalTitle" class="modal-title">
+            <svg class="modal-title-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            申訴案件已成功建立
+          </h3>
         </div>
 
-        <h3 id="modalTitle" class="modal-title">申訴案件已成功建立</h3>
-
-        <div class="modal-case-box">
-          <span class="modal-case-label">案件編號</span>
-          <div class="modal-case-id-row">
-            <code id="modalCaseId" class="modal-case-id">CV-XXXXX</code>
-            <button type="button" id="copyIdBtn" class="btn-copy" title="複製案件編號">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              <span id="copyBtnText">複製</span>
-            </button>
+        <div class="modal-body">
+          <div class="modal-case-box">
+            <span class="modal-case-label">案件編號</span>
+            <div class="modal-case-id-row">
+              <code id="modalCaseId" class="modal-case-id">CV-XXXXX</code>
+              <button type="button" id="copyIdBtn" class="btn-copy" title="複製案件編號">
+                <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copyBtnText">複製</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <p class="modal-desc">
-          專屬查詢連結與確認信已發送至 <strong id="modalEmailText" class="modal-highlight-email"></strong>。<br />
-          後續處理進度將透過 email 通知，請務必查收信箱（若未收到請檢查垃圾信匣）。
-        </p>
+          <p class="modal-desc">
+            專屬查詢連結與確認信已發送至 <strong id="modalEmailText" class="modal-highlight-email"></strong>。<br />
+            後續處理進度將透過 email 通知，請務必查收信箱（若未收到請檢查垃圾信匣）。
+          </p>
+        </div>
 
         <div class="modal-actions">
           <button type="button" id="modalCloseBtn" class="btn-modal-primary">我知道了</button>
@@ -836,7 +929,8 @@
           removeBtn.className = "file-item-remove";
           removeBtn.setAttribute("aria-label", `移除 ${file.name}`);
           removeBtn.setAttribute("title", "移除此檔案");
-          removeBtn.innerHTML = "&times;";
+          removeBtn.innerHTML =
+            '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
           removeBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();

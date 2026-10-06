@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { CasesTable } from "@/components/dashboard/cases-table";
 import { StatusChart } from "@/components/dashboard/status-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -35,10 +35,10 @@ export default async function DashboardPage({
 
   return (
     <AppShell staff={staff}>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold">儀表板</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-headline-md text-text-primary">儀表板</h1>
+          <p className="text-body-md text-text-secondary">
             查看申訴數量、待處理案件與近期狀態分佈。
           </p>
         </div>
@@ -66,7 +66,7 @@ export default async function DashboardPage({
             <CardContent>
               <form className="grid gap-3 sm:grid-cols-[10rem_1fr]">
                 <Select name="days" defaultValue={String(days)}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="期間">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -76,22 +76,27 @@ export default async function DashboardPage({
                     <SelectItem value="90">近 90 日</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input name="q" defaultValue={query} placeholder="搜尋關鍵字" className="pl-9" />
-                </div>
+                <InputGroup>
+                  <InputGroupAddon>
+                    <Search />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    name="q"
+                    defaultValue={query}
+                    placeholder="搜尋關鍵字"
+                    aria-label="搜尋關鍵字"
+                  />
+                </InputGroup>
               </form>
             </CardContent>
           </Card>
         </div>
 
-        <Card>
+        <Card id="cases" className="scroll-mt-[calc(var(--header-height)+1.5rem)] pb-0">
           <CardHeader>
             <CardTitle>歷史案件</CardTitle>
           </CardHeader>
-          <CardContent>
-            <CasesTable cases={data.cases} />
-          </CardContent>
+          <CasesTable cases={data.cases} />
         </Card>
       </div>
     </AppShell>
@@ -101,13 +106,9 @@ export default async function DashboardPage({
 function Metric({ title, value }: { title: string; value: number }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-semibold">{value}</p>
+      <CardContent className="flex flex-col gap-2">
+        <p className="text-label-md text-text-tertiary">{title}</p>
+        <p className="text-headline-md tabular-nums text-text-primary">{value}</p>
       </CardContent>
     </Card>
   );

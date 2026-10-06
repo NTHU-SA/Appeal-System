@@ -1,7 +1,7 @@
 import { isValidElement, Suspense, type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import CaseStatusPage from "@/app/case/[token]/page";
+import CaseStatusPage from "@/app/(public)/case/[token]/page";
 import { getCaseByToken } from "@/lib/data";
 import { StudentMessageForm } from "@/components/cases/student-message-form";
 

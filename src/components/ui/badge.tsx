@@ -4,32 +4,38 @@ import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+// Tinted label: solid-colour text on the same colour at 20% opacity. The
+// `border` appearance adds a 1px outline in the same colour.
 const badgeVariants = cva(
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "inline-flex w-fit shrink-0 items-center gap-1 rounded-sm border border-transparent px-2 py-1 text-body-md whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:size-3.5",
   {
     variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
-        secondary:
-          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
-        destructive:
-          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
-        outline:
-          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
-        ghost:
-          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
-        link: "text-primary underline-offset-4 hover:underline",
+      tone: {
+        primary: "bg-primary/20 text-primary-text-strong",
+        neutral: "bg-text-tertiary/20 text-text-secondary",
+        danger: "bg-danger/20 text-danger-text",
+      },
+      appearance: {
+        filled: "",
+        border: "",
       },
     },
+    compoundVariants: [
+      { tone: "primary", appearance: "border", className: "border-primary-text-strong/40" },
+      { tone: "neutral", appearance: "border", className: "border-text-tertiary/40" },
+      { tone: "danger", appearance: "border", className: "border-danger-text/40" },
+    ],
     defaultVariants: {
-      variant: "default",
+      tone: "neutral",
+      appearance: "filled",
     },
   }
 )
 
 function Badge({
   className,
-  variant = "default",
+  tone,
+  appearance,
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &
@@ -39,8 +45,7 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
-      data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ tone, appearance }), className)}
       {...props}
     />
   )

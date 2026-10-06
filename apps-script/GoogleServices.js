@@ -87,23 +87,25 @@ function sendCaseEmail_(caseRow, token, subject, bodyOverride, ss) {
     "國立清華大學學生會 學權小組",
   ].filter(Boolean).join("\n\n");
   const href = escapeEmailHtml_(link);
+  // Colours follow DESIGN.md (light). Email clients need solid colours, so
+  // the 12%-alpha border token is written as its value on white (#e6e5ea).
   const htmlBody = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 28px 20px; color: #20201d; line-height: 1.65;">
-      <p style="margin: 0; color: #6f6a61; font-size: 13px;">國立清華大學學生會 · 學權小組</p>
-      <h1 style="margin: 8px 0 12px; font-size: 24px; color: #21483f;">${title}</h1>
-      <p style="margin: 0 0 16px;">${escapeEmailHtml_(caseRow.student_name) || "同學"} 您好，<br>案件編號：<strong>${escapeEmailHtml_(caseRow.public_id)}</strong></p>
-      ${link ? `<div style="margin: 20px 0 24px;">
-        <a href="${href}" style="display: inline-block; padding: 14px 28px; background: #37645a; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 700;">查看案件與補件 →</a>
-        <p style="margin: 8px 0 0; color: #6f6a61; font-size: 13px;">查看回覆、留言或上傳附件</p>
+    <div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; color: #303031; font-size: 14px; line-height: 1.5;">
+      <p style="margin: 0; color: #6c6c6d; font-size: 12px;">國立清華大學學生會 · 學權小組</p>
+      <h1 style="margin: 8px 0 16px; font-size: 24px; font-weight: 600; line-height: 1.2; color: #303031;">${title}</h1>
+      <p style="margin: 0 0 16px; color: #4d4d4e;">${escapeEmailHtml_(caseRow.student_name) || "同學"} 您好，<br>案件編號：<strong style="color: #303031;">${escapeEmailHtml_(caseRow.public_id)}</strong></p>
+      ${link ? `<div style="margin: 24px 0;">
+        <a href="${href}" style="display: inline-block; padding: 12px 16px; background: #6e619c; color: #ffffff; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: 500; line-height: 1.25;">查看案件與補件 →</a>
+        <p style="margin: 8px 0 0; color: #6c6c6d; font-size: 12px;">查看回覆、留言或上傳附件</p>
       </div>` : ""}
-      ${bodyOverride ? `<div>${bodyOverride}</div>` : `<p>${intro}</p>
-      <div style="padding: 16px 20px; background: #fbf9f5; border: 1px solid #ded8cf; border-radius: 8px;">
-        <p style="margin: 0 0 12px;"><strong>${escapeEmailHtml_(caseRow.category)}</strong></p>
-        <p style="margin: 0; white-space: pre-wrap;">${escapeEmailHtml_(caseRow.subject)}</p>
-        <p style="margin: 12px 0 0; white-space: pre-wrap;"><span style="color: #6f6a61;">希望處理方式</span><br>${escapeEmailHtml_(caseRow.desired_outcome)}</p>
+      ${bodyOverride ? `<div style="color: #4d4d4e;">${bodyOverride}</div>` : `<p style="color: #4d4d4e;">${intro}</p>
+      <div style="padding: 16px; background: #f3f3f7; border: 1px solid #e6e5ea; border-radius: 8px;">
+        <p style="margin: 0 0 12px; color: #303031;"><strong>${escapeEmailHtml_(caseRow.category)}</strong></p>
+        <p style="margin: 0; white-space: pre-wrap; color: #4d4d4e;">${escapeEmailHtml_(caseRow.subject)}</p>
+        <p style="margin: 12px 0 0; white-space: pre-wrap; color: #4d4d4e;"><span style="color: #6c6c6d; font-size: 12px;">希望處理方式</span><br>${escapeEmailHtml_(caseRow.desired_outcome)}</p>
       </div>`}
-      <p style="margin: 24px 0 0; font-size: 12px; color: #6f6a61;">請保留專屬連結，勿轉傳他人。此信件無法直接回覆，請至案件頁留言。</p>
-      ${link ? `<p style="font-size: 12px; color: #6f6a61;">按鈕無法開啟？請複製網址：<br><a href="${href}" style="color: #37645a; word-break: break-all;">${href}</a></p>` : ""}
+      <p style="margin: 24px 0 0; font-size: 12px; color: #6c6c6d;">請保留專屬連結，勿轉傳他人。此信件無法直接回覆，請至案件頁留言。</p>
+      ${link ? `<p style="font-size: 12px; color: #6c6c6d;">按鈕無法開啟？請複製網址：<br><a href="${href}" style="color: #6e619c; word-break: break-all;">${href}</a></p>` : ""}
     </div>`;
   MailApp.sendEmail({
     to: caseRow.student_email,

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Inbox } from "lucide-react";
 
-import { statusLabels, type CaseRecord } from "@/lib/types";
+import type { CaseRecord } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { CaseStatusBadge } from "@/components/cases/case-status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -12,9 +14,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Rendered flush inside its card: the top border separates it from the title.
 export function CasesTable({ cases }: { cases: CaseRecord[] }) {
   return (
-    <div className="overflow-hidden rounded-md border">
+    <div className="border-t">
       <Table>
         <TableHeader>
           <TableRow>
@@ -31,33 +34,38 @@ export function CasesTable({ cases }: { cases: CaseRecord[] }) {
               <TableCell>
                 <Link
                   href={`/cases/${item.id}`}
-                  className="font-mono text-sm font-medium hover:underline"
+                  className="rounded-sm text-label-md tabular-nums text-primary-text underline-offset-4 hover:underline"
                 >
                   {item.public_id}
                 </Link>
-                <p className="mt-1 line-clamp-1 max-w-[20rem] text-xs text-muted-foreground">
+                <p
+                  className="mt-1 max-w-80 truncate text-caption text-text-tertiary"
+                  title={item.subject}
+                >
                   {item.subject}
                 </p>
               </TableCell>
               <TableCell>
-                <p className="font-medium">{item.student_name}</p>
-                <p className="text-xs text-muted-foreground">{item.student_department}</p>
+                <p className="text-text-primary">{item.student_name}</p>
+                <p className="text-caption text-text-tertiary">{item.student_department}</p>
               </TableCell>
               <TableCell className="hidden md:table-cell">{item.category}</TableCell>
               <TableCell>
-                <Badge variant={item.status === "pending" ? "default" : "secondary"}>
-                  {statusLabels[item.status]}
-                </Badge>
+                <CaseStatusBadge status={item.status} />
               </TableCell>
-              <TableCell className="hidden lg:table-cell">
+              <TableCell className="hidden tabular-nums text-text-tertiary lg:table-cell">
                 {formatDate(item.created_at)}
               </TableCell>
             </TableRow>
           ))}
           {!cases.length ? (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                沒有符合條件的案件
+              <TableCell colSpan={5} className="whitespace-normal">
+                <EmptyState
+                  icon={Inbox}
+                  title="沒有符合條件的案件"
+                  description="調整期間或搜尋關鍵字後再試一次。"
+                />
               </TableCell>
             </TableRow>
           ) : null}

@@ -53,7 +53,7 @@ export function RichReplyEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-48 rounded-md border bg-background px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "rich-text min-h-48 rounded-sm border bg-surface px-3 py-2 text-body-md outline-none transition-colors focus:border-primary",
       },
     },
   });
@@ -91,39 +91,38 @@ export function RichReplyEditor({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <ToggleButton
           pressed={editor.isActive("bold")}
           label="粗體"
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
-          <Bold className="h-4 w-4" />
+          <Bold />
         </ToggleButton>
         <ToggleButton
           pressed={editor.isActive("blockquote")}
           label="引用"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
         >
-          <Quote className="h-4 w-4" />
+          <Quote />
         </ToggleButton>
         <Select
-          defaultValue="Geist"
+          defaultValue="Inter"
           onValueChange={(font) => editor.chain().focus().setFontFamily(font).run()}
         >
-          <SelectTrigger className="h-9 w-36">
+          <SelectTrigger className="w-36" aria-label="字型">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Geist">Geist</SelectItem>
+            <SelectItem value="Inter">Inter</SelectItem>
             <SelectItem value="serif">Serif</SelectItem>
             <SelectItem value="monospace">Mono</SelectItem>
           </SelectContent>
         </Select>
         <Button
           type="button"
-          variant="outline"
-          size="sm"
+          variant="secondary"
           onClick={() => {
             const href = window.prompt("連結網址");
             if (href) editor.chain().focus().setLink({ href }).run();
@@ -131,8 +130,8 @@ export function RichReplyEditor({
         >
           連結
         </Button>
-        <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-          <Save className="h-3.5 w-3.5" />
+        <div className="ml-auto flex items-center gap-1 text-caption text-text-tertiary">
+          <Save className="size-3.5" />
           {isPending ? "儲存中" : savedAt || "自動儲存"}
         </div>
       </div>
@@ -144,7 +143,7 @@ export function RichReplyEditor({
           value={decision}
           onValueChange={(value: "accepted" | "rejected") => setDecision(value)}
         >
-          <SelectTrigger className="sm:w-40">
+          <SelectTrigger className="sm:w-40" aria-label="審核決定">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -154,7 +153,7 @@ export function RichReplyEditor({
         </Select>
         <Button type="button" onClick={submit} disabled={isPending}>
           送出給部長審核
-          <Send className="h-4 w-4" />
+          <Send />
         </Button>
       </div>
     </div>

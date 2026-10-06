@@ -34,7 +34,7 @@ export function EmbeddedCaseForm({ src }: EmbeddedCaseFormProps) {
   }, []);
 
   return (
-    <div className="relative" aria-busy={isLoading}>
+    <div className="@container relative" aria-busy={isLoading}>
       {isLoading ? <CaseFormSkeleton /> : null}
       <iframe
         ref={iframeRef}
@@ -49,12 +49,14 @@ export function EmbeddedCaseForm({ src }: EmbeddedCaseFormProps) {
   );
 }
 
+// Mirrors apps-script/Index.html. Container queries match the iframe width,
+// which is what the form's own media queries see.
 function CaseFormSkeleton() {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0" role="status">
       <span className="sr-only">申訴表單載入中</span>
-      <div aria-hidden="true" className="space-y-6">
-        <div className="grid gap-5 sm:grid-cols-2">
+      <div aria-hidden="true" className="flex flex-col gap-4">
+        <div className="grid gap-4 @min-[640px]:grid-cols-2">
           <FieldSkeleton />
           <FieldSkeleton />
           <FieldSkeleton />
@@ -64,15 +66,15 @@ function CaseFormSkeleton() {
         <FieldSkeleton multiline />
         <FieldSkeleton multiline />
 
-        <div className="space-y-3 rounded-lg border border-dashed p-4">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-4 w-72 max-w-full" />
+        <div className="flex flex-col gap-2 rounded-lg border border-dashed p-4">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-(--control-height) w-full" />
+          <Skeleton className="h-3 w-72 max-w-full" />
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Skeleton className="h-4 w-80 max-w-full" />
-          <Skeleton className="h-12 w-full sm:w-28" />
+        <div className="flex flex-col gap-4 @min-[560px]:flex-row @min-[560px]:items-center @min-[560px]:justify-between">
+          <Skeleton className="h-3 w-80 max-w-full" />
+          <Skeleton className="h-(--control-height) w-full @min-[560px]:w-24" />
         </div>
       </div>
     </div>
@@ -81,9 +83,9 @@ function CaseFormSkeleton() {
 
 function FieldSkeleton({ multiline = false }: { multiline?: boolean }) {
   return (
-    <div className="space-y-3">
-      <Skeleton className="h-5 w-16" />
-      <Skeleton className={multiline ? "h-36 w-full" : "h-12 w-full"} />
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-4 w-16" />
+      <Skeleton className={multiline ? "h-32 w-full" : "h-(--control-height) w-full"} />
     </div>
   );
 }

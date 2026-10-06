@@ -19,9 +19,12 @@ export function ToggleButton({
       <TooltipTrigger asChild>
         <Button
           type="button"
-          variant={pressed ? "default" : "outline"}
+          variant="ghost"
           size="icon"
           aria-label={label}
+          // Pressed state reads as "selected" (surface-active), not a second
+          // primary button next to the submit action.
+          aria-pressed={pressed}
           onClick={onClick}
         >
           {children}

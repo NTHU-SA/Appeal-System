@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { FileText, LayoutDashboard, LogOut, Users } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import { signOut } from "@/lib/actions";
 import type { StaffSession } from "@/lib/auth";
+import { AppNav, type AppNavItem } from "@/components/layout/app-nav";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function AppShell({
   staff,
@@ -13,47 +14,52 @@ export function AppShell({
   staff: StaffSession;
   children: React.ReactNode;
 }) {
+  const items: AppNavItem[] = [
+    { href: "/dashboard", label: "儀表板", match: "/dashboard" },
+    { href: "/dashboard#cases", label: "案件", match: "/cases" },
+    ...(staff.role === "minister"
+      ? [{ href: "/admin/members", label: "成員", match: "/admin/members" }]
+      : []),
+  ];
+
   return (
-    <div className="flex flex-1 flex-col bg-background">
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/dashboard" className="min-w-0">
-            <p className="truncate text-sm text-muted-foreground">清華大學</p>
-            <h1 className="truncate text-base font-semibold">
-              學生申訴協力系統
-            </h1>
+    <div className="flex flex-1 flex-col">
+      <header className="sticky top-0 z-900 border-b bg-surface">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 lg:px-10">
+          <Link
+            href="/dashboard"
+            className="title-features min-w-0 truncate rounded-sm text-wordmark text-text-primary"
+          >
+            學生申訴協力系統
           </Link>
-          <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/dashboard">
-                <LayoutDashboard className="h-4 w-4" />
-                <span className="hidden sm:inline">儀表板</span>
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/dashboard">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">案件</span>
-              </Link>
-            </Button>
-            {staff.role === "minister" ? (
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/admin/members">
-                  <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">成員</span>
-                </Link>
-              </Button>
-            ) : null}
-            <Separator orientation="vertical" className="hidden h-6 sm:block" />
-            <form action={signOut}>
-              <Button variant="ghost" size="icon" aria-label="登出">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </form>
-          </nav>
+          <div className="flex items-center">
+            <AppNav
+              items={items}
+              signOut={
+                <form action={signOut}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label="登出">
+                        <LogOut />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>登出</TooltipContent>
+                  </Tooltip>
+                </form>
+              }
+              signOutLarge={
+                <form action={signOut}>
+                  <Button variant="secondary">
+                    <LogOut />
+                    登出
+                  </Button>
+                </form>
+              }
+            />
+          </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-6 lg:px-10">{children}</main>
     </div>
   );
 }
