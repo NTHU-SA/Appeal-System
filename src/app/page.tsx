@@ -1,10 +1,7 @@
-import { buttonVariants } from "@/components/ui/button";
-import { getCaseFormUrl } from "@/lib/env";
+import { PublicAppealForm } from "@/components/cases/public-appeal-form";
 import Image from "next/image";
 
 export default function Home() {
-  const formUrl = getCaseFormUrl();
-
   return (
     <main className="flex-1">
       <div className="mx-auto w-full max-w-4xl px-4 pt-6 pb-8 sm:px-6 sm:pt-8 sm:pb-10">
@@ -32,20 +29,7 @@ export default function Home() {
           <h2 id="case-form-heading" className="mb-4 text-xl font-semibold">
             申訴送件
           </h2>
-          {formUrl ? (
-            <div className="space-y-3">
-              <a href={formUrl} className={buttonVariants({ className: "min-h-11 px-4" })}>
-                開啟學生申訴表單
-              </a>
-              <p className="text-sm text-muted-foreground">
-                若 Google 顯示無法開啟，請用瀏覽器的無痕或私密視窗開啟表單。
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-destructive">
-              申訴表單目前無法載入，請稍後再試。
-            </p>
-          )}
+          <PublicAppealForm />
         </section>
       </div>
     </main>

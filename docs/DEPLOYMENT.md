@@ -2,10 +2,10 @@
 
 這個專案分成兩個部署：
 
-- **前端與後台**：Next.js 部署到 **Cloudflare Workers**（使用 OpenNext）。
-- **資料、表單、附件、寄信、自動結案**：Google Apps Script Web App，搭配 Google Sheets、Drive、Gmail。
+- **公開送件、網站與後台**部署在 Cloudflare Workers，使用 Next.js 和 OpenNext。
+- **案件資料、附件儲存、寄信與自動結案**由 Google Apps Script Web App 處理，搭配 Google Sheets、Drive、Gmail。
 
-目前公開送件表單由 Apps Script Web App 提供；Cloudflare Worker 首頁放按鈕連到該表單。
+公開送件表單位於 `https://appeal.nthusa.tw/`。瀏覽器將附件逐檔送至同網域的 `/api/appeals`，Worker 驗證後再把附件及申訴資料轉給 Apps Script。
 
 ---
 
@@ -60,8 +60,7 @@ pnpm exec wrangler secret put GOOGLE_APPS_SCRIPT_SHARED_SECRET
 
 ```jsonc
 "vars": {
-  "NEXT_PUBLIC_APP_URL": "https://campusvoice.<你的帳號>.workers.dev",
-  "NEXT_PUBLIC_CASE_FORM_URL": "https://script.google.com/macros/s/.../exec"
+  "NEXT_PUBLIC_APP_URL": "https://campusvoice.<你的帳號>.workers.dev"
 }
 ```
 
@@ -75,6 +74,8 @@ pnpm preview
 ```
 
 ### E. 正式部署
+
+公開送件上線時，先用 `pnpm gas:push` 和 `pnpm gas:deploy` 更新第 4 節的既有 Apps Script Web App，確認是新版本後再部署 Worker。若使用 Git 自動部署，請先更新 Apps Script，再合併觸發 Worker 部署。
 
 ```bash
 pnpm run deploy
@@ -178,8 +179,6 @@ https://script.google.com/macros/s/......../exec
 pnpm exec wrangler secret put GOOGLE_APPS_SCRIPT_WEB_APP_URL
 # 輸入 /exec URL
 ```
-
-同時將 `NEXT_PUBLIC_CASE_FORM_URL` 填入 `wrangler.jsonc`。
 
 並把 `setupCampusVoice()` log 裡的 secret 填入：
 
@@ -344,7 +343,7 @@ pnpm gas:push
 
 - Cloudflare Worker 已設定全部 Secrets 與 Vars。
 - Apps Script 已部署 Web app，access 是 `Anyone`。
-- `NEXT_PUBLIC_CASE_FORM_URL` 能開出表單。
+- `https://appeal.nthusa.tw/` 直接顯示申訴表單，附件及送件都呼叫同網域的 `/api/appeals`。
 - `GOOGLE_APPS_SCRIPT_WEB_APP_URL` 是同一個 `/exec` URL。
 - `GOOGLE_APPS_SCRIPT_SHARED_SECRET` 跟 Apps Script script property 裡的 `SHARED_SECRET` 一致。
 - Google OAuth redirect URI 是 `https://你的-worker-網址/api/auth/callback/google`。

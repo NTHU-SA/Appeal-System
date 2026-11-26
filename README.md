@@ -6,7 +6,7 @@ Next.js + Google Apps Script Web App + Google Sheets/Drive/Gmail 的學生申訴
 
 - Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui
 - Auth.js Google OAuth for staff login
-- Apps Script Web App for public case intake
+- Cloudflare Worker for public intake and Apps Script for case processing
 - Google Sheets for case data, members, drafts, reviews, and audit logs
 - Google Drive for uploaded attachments
 - Gmail/MailApp from Google Apps Script for notifications
@@ -24,7 +24,6 @@ pnpm dev
 Copy `.env.example` to `.env.local` and fill in:
 
 - `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_CASE_FORM_URL`
 - `GOOGLE_APPS_SCRIPT_WEB_APP_URL`
 - `GOOGLE_APPS_SCRIPT_SHARED_SECRET`
 - `AUTH_SECRET`
@@ -48,12 +47,12 @@ pnpm gas:push
 4. In Apps Script, set script property `APP_URL` to the deployed Next.js URL.
 5. Run `setupCampusVoice()` once and authorize the script.
 6. Deploy the script as a web app.
-7. Copy the `/exec` URL to both `NEXT_PUBLIC_CASE_FORM_URL` and `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
+7. Copy the `/exec` URL to `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
 8. Copy the logged `SHARED_SECRET` to `GOOGLE_APPS_SCRIPT_SHARED_SECRET`.
 
 ### Public Form
 
-The public form is rendered by `apps-script/Index.html` through Apps Script `doGet()`. It supports PDF, Word, PNG, and JPG uploads up to 8MB each, then stores files in the generated Drive folder.
+The public form lives at `https://appeal.nthusa.tw/`. The Cloudflare Worker forwards up to 10 PDF, Word, PNG, or JPG attachments of 8 MB each and the appeal details to Apps Script. Deploy the Apps Script update before the Worker. See the [deployment guide](docs/DEPLOYMENT.md) for the rollout and checks.
 
 ## Staff Access
 

@@ -13,9 +13,8 @@ pnpm gas:push
 
 3. In Apps Script, set script property `APP_URL` to the deployed Next.js URL.
 4. Run `setupCampusVoice()` once and authorize the script.
-5. Deploy as a web app and copy the `/exec` URL into `NEXT_PUBLIC_CASE_FORM_URL`.
-6. Copy the logged `SHARED_SECRET` into `GOOGLE_APPS_SCRIPT_SHARED_SECRET`.
-7. Copy the same `/exec` URL into `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
+5. Deploy as a web app and copy the `/exec` URL into `GOOGLE_APPS_SCRIPT_WEB_APP_URL`.
+6. Copy `SHARED_SECRET` into `GOOGLE_APPS_SCRIPT_SHARED_SECRET`.
 
 ## Deploy Updates
 
@@ -30,7 +29,7 @@ pnpm gas:deploy
 
 ## Public Form
 
-The public form is served from `Index.html` by `doGet()`. Submissions call `submitPublicCase()` with `google.script.run`, write rows to Sheets, upload files to Drive, and send MailApp notifications.
+The Worker calls `doPost()` using the shared secret. `uploadPublicCaseFile` stages one attachment per call. `submitPublicCase` verifies the attachment receipts, records the case in Sheets, moves the attachments into the case folder, and sends MailApp notifications. The daily `closeStaleCases` trigger moves abandoned staging folders older than 24 hours to Drive Trash. Existing direct Apps Script links still use `Index.html` and `google.script.run`.
 
 ## Student case links
 
