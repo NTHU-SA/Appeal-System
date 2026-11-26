@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type ComponentProps, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +25,27 @@ type SubmissionAttempt = {
 };
 
 const fieldClass = "min-h-12 text-base md:text-base";
-const selectClass = "min-h-12 w-full rounded-lg border border-input bg-background px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 const endpoint = "/api/appeals";
+
+function AppealSelect({ options, prompt, ...props }: ComponentProps<"select"> & {
+  options: readonly string[];
+  prompt: string;
+}) {
+  return (
+    <div className="relative">
+      <select
+        {...props}
+        required
+        defaultValue=""
+        className="h-12 w-full appearance-none rounded-lg border border-input bg-background pl-2.5 pr-9 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <option value="">{prompt}</option>
+        {options.map((item) => <option key={item}>{item}</option>)}
+      </select>
+      <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}
 
 async function sendAppealRequest<T>(options: RequestInit): Promise<T> {
   const response = await fetch(endpoint, options);
@@ -167,17 +187,13 @@ export function PublicAppealForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="appeal-department">年級</Label>
-            <select
+            <AppealSelect
               id="appeal-department"
               name="department"
-              required
-              defaultValue=""
+              prompt="請選擇年級"
+              options={appealDepartments}
               onChange={(event) => setOtherDepartment(event.currentTarget.value === "其他")}
-              className={selectClass}
-            >
-              <option value="">請選擇年級</option>
-              {appealDepartments.map((item) => <option key={item}>{item}</option>)}
-            </select>
+            />
             {otherDepartment && (
               <div className="space-y-2 pt-2">
                 <Label htmlFor="appeal-department-other">年級／身分說明</Label>
@@ -187,10 +203,7 @@ export function PublicAppealForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="appeal-category">申訴種類</Label>
-            <select id="appeal-category" name="category" required defaultValue="" className={selectClass}>
-              <option value="">請選擇申訴種類</option>
-              {appealCategories.map((item) => <option key={item}>{item}</option>)}
-            </select>
+            <AppealSelect id="appeal-category" name="category" prompt="請選擇申訴種類" options={appealCategories} />
           </div>
         </div>
 
