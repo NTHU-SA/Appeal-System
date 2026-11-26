@@ -25,6 +25,13 @@
       "head_sampling_rate": 1
     }
   },
+  "ratelimits": [
+    {
+      "name": "PUBLIC_APPEAL_RATE_LIMIT",
+      "namespace_id": "62021",
+      "simple": { "limit": 60, "period": 60 }
+    }
+  ],
   "routes": [
     {
       "pattern": "campusvoice.nthusa.tw",

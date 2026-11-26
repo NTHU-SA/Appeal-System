@@ -13,19 +13,22 @@ vi.mock("@/lib/gas", () => ({
   callGas: vi.fn(),
 }));
 
+// These tests call the session overload of auth().
+const mockedAuth = vi.mocked<() => Promise<Session | null>>(authModule.auth);
+
 describe("getCurrentStaff role caching", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("returns cached role from session directly without calling GAS", async () => {
-    vi.mocked(authModule.auth).mockResolvedValue({
+    mockedAuth.mockResolvedValue({
       user: {
         email: "test@example.com",
         role: "minister",
       },
       expires: "2099-01-01",
-    } as Session);
+    });
 
     const staff = await getCurrentStaff();
 
@@ -38,12 +41,12 @@ describe("getCurrentStaff role caching", () => {
   });
 
   it("falls back to callGas when session has no cached role", async () => {
-    vi.mocked(authModule.auth).mockResolvedValue({
+    mockedAuth.mockResolvedValue({
       user: {
         email: "test@example.com",
       },
       expires: "2099-01-01",
-    } as Session);
+    });
 
     vi.mocked(gasModule.callGas).mockResolvedValue({
       role: "member",
@@ -62,12 +65,12 @@ describe("getCurrentStaff role caching", () => {
   });
 
   it("returns null when user is not staff even after GAS fallback", async () => {
-    vi.mocked(authModule.auth).mockResolvedValue({
+    mockedAuth.mockResolvedValue({
       user: {
         email: "student@example.com",
       },
       expires: "2099-01-01",
-    } as Session);
+    });
 
     vi.mocked(gasModule.callGas).mockResolvedValue({
       role: null,

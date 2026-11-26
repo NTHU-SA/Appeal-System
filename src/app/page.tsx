@@ -1,10 +1,7 @@
-import { EmbeddedCaseForm } from "@/components/cases/embedded-case-form";
-import { getCaseFormUrl } from "@/lib/env";
+import { PublicAppealForm } from "@/components/cases/public-appeal-form";
 import Image from "next/image";
 
 export default function Home() {
-  const formUrl = getCaseFormUrl();
-
   return (
     <main className="flex-1">
       <div className="mx-auto w-full max-w-4xl px-4 pt-6 pb-8 sm:px-6 sm:pt-8 sm:pb-10">
@@ -24,21 +21,15 @@ export default function Home() {
             </h1>
           </div>
           <p className="max-w-2xl text-xs text-muted-foreground sm:text-base">
-            填寫下方表單送出申訴，後續進度與回覆會寄到你的電子郵件。
+            透過申訴表單送件，後續進度與回覆會寄到你的電子郵件。
           </p>
         </header>
 
         <section aria-labelledby="case-form-heading" className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
-          <h2 id="case-form-heading" className="mb-6 text-xl font-semibold">
+          <h2 id="case-form-heading" className="mb-4 text-xl font-semibold">
             申訴送件
           </h2>
-          {formUrl ? (
-            <EmbeddedCaseForm src={formUrl} />
-          ) : (
-            <p className="text-sm text-destructive">
-              申訴表單目前無法載入，請稍後再試。
-            </p>
-          )}
+          <PublicAppealForm />
         </section>
       </div>
     </main>

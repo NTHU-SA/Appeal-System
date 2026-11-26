@@ -1,4 +1,6 @@
 export type GasAction =
+  | "uploadPublicCaseFile"
+  | "submitPublicCase"
   | "getMemberRole"
   | "listMembers"
   | "upsertMember"
@@ -38,7 +40,8 @@ export async function callGas<T>(
 ): Promise<T> {
   // Reads and deduplicated student submissions can safely repeat the POST.
   const retryable = action.startsWith("get") || action.startsWith("list") ||
-    (action === "addStudentMessage" && typeof payload.requestId === "string");
+    ((action === "addStudentMessage" || action === "uploadPublicCaseFile" || action === "submitPublicCase") &&
+      typeof payload.requestId === "string");
   const backoffMs = options?.backoffMs ?? 800;
   for (let attempt = 0; ; attempt++) {
     try {
