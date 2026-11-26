@@ -103,7 +103,7 @@ function setupCampusVoice() {
   console.log(`Sheet: ${ss.getUrl()}`);
   console.log(`Drive folder: ${rootFolder.getUrl()}`);
   console.log(`Shared secret: ${sharedSecret}`);
-  console.log("Deploy this script as a web app, then use the /exec URL as NEXT_PUBLIC_CASE_FORM_URL and GOOGLE_APPS_SCRIPT_WEB_APP_URL.");
+  console.log("Deploy this script as a web app, then use the /exec URL as GOOGLE_APPS_SCRIPT_WEB_APP_URL.");
 }
 
 function doGet() {
@@ -113,13 +113,7 @@ function doGet() {
 }
 
 function submitPublicCase(input) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    return createCaseFromSubmission_(input);
-  } finally {
-    lock.releaseLock();
-  }
+  return withPublicCaseLock_(() => createCaseFromSubmission_(input));
 }
 
 function doPost(e) {
@@ -137,6 +131,10 @@ function doPost(e) {
 function handleAction_(action, payload) {
   const ss = getSpreadsheet_();
   switch (action) {
+    case "uploadPublicCaseFile":
+      return withPublicCaseLock_(() => stagePublicCaseFile_(ss, payload));
+    case "submitPublicCase":
+      return withPublicCaseLock_(() => submitStagedPublicCase_(ss, payload));
     case "getMemberRole":
       return { role: getMemberRole_(ss, payload.email) };
     case "listMembers":

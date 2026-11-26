@@ -1,25 +1,34 @@
 function createCaseFromSubmission_(input) {
   validatePublicCaseInput_(input);
   const ss = getSpreadsheet_();
-  const appUrl = requireAppUrl_(ss);
-  const rootFolder = getDriveFolder_();
-  const now = nowIso_();
-  const publicId = createPublicCaseId_();
-  const token = createToken_();
-  const caseId = Utilities.getUuid();
+  const caseRow = buildPublicCase_(input, ss);
+  const caseFolder = getOrCreateSubFolder_(getDriveFolder_(), caseRow.public_id);
+  grantViewerAccessSafe_(caseFolder, caseRow.student_email);
   const messageId = Utilities.getUuid();
-  const caseFolder = getOrCreateSubFolder_(rootFolder, publicId);
-  const studentEmail = String(input.email).trim().toLowerCase();
-  grantViewerAccessSafe_(caseFolder, studentEmail);
 
-  const caseRow = {
-    id: caseId,
-    public_id: publicId,
+  appendObject_(ss, "Cases", publicCaseCells_(caseRow));
+  appendPublicCaseMessage_(ss, caseRow, messageId);
+  (input.files || []).forEach((fileInput) => {
+    const file = caseFolder.createFile(publicCaseFileBlob_(fileInput));
+    appendPublicCaseAttachment_(ss, caseRow, messageId, file, Utilities.getUuid());
+  });
+
+  sendPublicCaseConfirmation_(ss, caseRow);
+  return { publicId: caseRow.public_id, caseId: caseRow.id };
+}
+
+function buildPublicCase_(input, ss, caseId) {
+  const appUrl = requireAppUrl_(ss);
+  const now = nowIso_();
+  const token = createToken_();
+  return {
+    id: caseId || Utilities.getUuid(),
+    public_id: createPublicCaseId_(),
     token_hash: sha256Hex_(token),
     token_revoked_at: "",
     student_case_url: `${appUrl}/case/${token}`,
     status: "pending",
-    student_email: studentEmail,
+    student_email: String(input.email).trim().toLowerCase(),
     student_department: String(input.department || "").trim(),
     student_name: String(input.name || "").trim(),
     category: String(input.category || "").trim(),
@@ -33,44 +42,59 @@ function createCaseFromSubmission_(input) {
     last_staff_message_at: "",
     closed_at: "",
   };
+}
 
-  appendObject_(ss, "Cases", caseRow);
+function publicCaseCells_(caseRow) {
+  // Sheets interprets leading "=" in appendRow as a formula.
+  const row = { ...caseRow };
+  ["student_email", "student_department", "student_name", "category", "subject", "desired_outcome"].forEach((key) => {
+    row[key] = literalPublicCaseCell_(row[key]);
+  });
+  return row;
+}
+
+function literalPublicCaseCell_(value) {
+  return value.startsWith("=") || value.startsWith("'") ? "'" + value : value;
+}
+
+function appendPublicCaseMessage_(ss, caseRow, messageId) {
   appendObject_(ss, "Messages", {
     id: messageId,
-    case_id: caseId,
+    case_id: caseRow.id,
     author_id: "",
-    author_email: studentEmail,
+    author_email: literalPublicCaseCell_(caseRow.student_email),
     author_type: "student",
-    body_text: caseRow.subject,
+    body_text: literalPublicCaseCell_(caseRow.subject),
     body_html: "",
-    created_at: now,
+    created_at: caseRow.created_at,
   });
+}
 
-  const files = input.files || [];
-  if (files.length > 10) throw new Error("最多上傳 10 個檔案。");
-  files.forEach((fileInput) => {
-    const bytes = Utilities.base64Decode(fileInput.data);
-    if (bytes.length > 8 * 1024 * 1024) throw new Error(`${fileInput.name} 超過 8MB 限制。`);
-    if (!isAllowedUpload_(fileInput.mimeType)) throw new Error(`${fileInput.name} 檔案格式不支援。`);
-    const blob = Utilities.newBlob(bytes, fileInput.mimeType, sanitizeFileName_(fileInput.name));
-    const file = caseFolder.createFile(blob);
-    appendObject_(ss, "Attachments", {
-      id: Utilities.getUuid(),
-      case_id: caseId,
-      message_id: messageId,
-      drive_file_id: file.getId(),
-      drive_url: file.getUrl(),
-      file_name: file.getName(),
-      file_type: file.getMimeType(),
-      file_size: bytes.length,
-      uploaded_by_type: "student",
-      created_at: now,
-    });
+function publicCaseFileBlob_(file) {
+  if (!file || !isAllowedUpload_(file.mimeType)) throw new Error("檔案格式不支援。");
+  const bytes = Utilities.base64Decode(file.data);
+  if (bytes.length > 8 * 1024 * 1024) throw new Error("單一附件不可超過 8 MB。");
+  return Utilities.newBlob(bytes, file.mimeType, sanitizeFileName_(file.name));
+}
+
+function appendPublicCaseAttachment_(ss, caseRow, messageId, file, id) {
+  appendObject_(ss, "Attachments", {
+    id,
+    case_id: caseRow.id,
+    message_id: messageId,
+    drive_file_id: file.getId(),
+    drive_url: file.getUrl(),
+    file_name: literalPublicCaseCell_(file.getName()),
+    file_type: file.getMimeType(),
+    file_size: file.getSize(),
+    uploaded_by_type: "student",
+    created_at: caseRow.created_at,
   });
+}
 
-  sendCaseEmail_(caseRow, token, `【清華大學學生會】申訴案件已受理：${publicId}`, null, ss);
-  notifyStaff_(ss, `新申訴案件 ${publicId}`, `${caseRow.student_name}（${caseRow.student_department}）送出 ${caseRow.category}`);
-  return { publicId, caseId };
+function sendPublicCaseConfirmation_(ss, caseRow) {
+  sendCaseEmail_(caseRow, "", `【清華大學學生會】申訴案件已受理：${caseRow.public_id}`, null, ss);
+  notifyStaff_(ss, `新申訴案件 ${caseRow.public_id}`, `${caseRow.student_name}（${caseRow.student_department}）送出 ${caseRow.category}`);
 }
 
 function listCases_(ss, payload) {
@@ -340,6 +364,7 @@ function approveReview_(ss, payload) {
 }
 
 function closeStaleCases() {
+  purgePublicCaseUploads_();
   const ss = getSpreadsheet_();
   const now = new Date();
   const rows = readObjects_(ss, "Cases");

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 function runtime(globals = {}) {
   const context = vm.createContext({ console, ...globals });
-  for (const file of ["Code", "Sheets", "Utils", "GoogleServices", "Workflow"]) {
+  for (const file of ["Code", "Sheets", "Utils", "GoogleServices", "Workflow", "PublicIntake"]) {
     vm.runInContext(readFileSync(`apps-script/${file}.js`, "utf8"), context);
   }
   return context;
@@ -165,6 +165,7 @@ describe("student supplement persistence", () => {
       getUrl: () => "https://drive.google.com/file",
       getName: () => "doc.pdf",
       getMimeType: () => "application/pdf",
+      getSize: () => 2,
       addViewer: addFileViewer,
     };
     const folder = {
@@ -351,5 +352,83 @@ describe("targeted case sheet reads", () => {
     expect(ctx.readObjectsByColumn_).toHaveBeenCalledTimes(1);
     ctx.readObjectsByColumn_.mockReturnValue([]);
     expect(ctx.getCaseByToken_({}, "unknown")).toBeNull();
+  });
+});
+
+describe("public intake through the Worker", () => {
+  const requestId = "d671271c-be98-42cd-a61f-6a12d48b8198";
+  const input = {
+    requestId,
+    email: "student@example.com",
+    department: "大一",
+    name: "測試生",
+    category: "其他",
+    subject: "具有足夠字數的測試內容",
+    desiredOutcome: "希望得到協助",
+  };
+
+  function intakeRuntime() {
+    const ctx = runtime({ SpreadsheetApp: { flush: vi.fn() } });
+    const rows: Record<string, Record<string, unknown>[]> = { Cases: [], Messages: [], Attachments: [] };
+    const files: Array<{
+      id: string;
+      name: string;
+      description: string;
+      folder: string;
+    }> = [{ id: "attachment", name: "0-1-example.pdf", description: "", folder: requestId }];
+    const iterator = <T,>(values: T[]) => ({ hasNext: () => Boolean(values.length), next: () => values.shift() });
+    const folders = Object.fromEntries(["root", "CampusVoice Pending Uploads", requestId, "CV-test"].map((name) => [
+      name,
+      {
+        name,
+        getFiles: () => iterator(files.filter((file) => file.folder === name).map((file) => ({
+          getId: () => file.id,
+          getName: () => file.name,
+          getDescription: () => file.description,
+          setDescription: (description: string) => { file.description = description; },
+          setName: (name: string) => { file.name = name; },
+          moveTo: (folder: { name: string }) => { file.folder = folder.name; },
+          getUrl: () => "https://drive.google.com/file",
+          getMimeType: () => "application/pdf",
+          getSize: () => 10,
+        }))),
+        setTrashed: vi.fn(),
+      },
+    ]));
+    ctx.getDriveFolder_ = () => folders.root;
+    ctx.findPublicCaseFolder_ = (_parent: unknown, name: string) => folders[name] ?? null;
+    ctx.getOrCreateSubFolder_ = ctx.findPublicCaseFolder_;
+    ctx.buildPublicCase_ = () => ({
+      id: requestId, public_id: "CV-test", student_email: input.email, student_department: input.department,
+      student_name: input.name, category: input.category, subject: input.subject, desired_outcome: input.desiredOutcome,
+    });
+    ctx.readObjectsByColumn_ = (_ss: unknown, tab: string, key: string, value: string) =>
+      rows[tab].filter((row) => row[key] === value);
+    ctx.appendObject_ = vi.fn((_ss, tab, row) => rows[tab].push(row));
+    ctx.sendPublicCaseConfirmation_ = vi.fn();
+    return { ctx, files, rows };
+  }
+
+  it("rejects attachment receipts outside this request before creating a case", () => {
+    const { ctx, rows } = intakeRuntime();
+    expect(() => ctx.submitStagedPublicCase_({}, { ...input, fileIds: ["unrelated"] })).toThrow("附件尚未上傳完成");
+    expect(rows.Cases).toHaveLength(0);
+  });
+
+  it("resumes after a moved file without duplicating the case or stripping the filename twice", () => {
+    const { ctx, files, rows } = intakeRuntime();
+    ctx.appendObject_.mockImplementationOnce((_ss: unknown, tab: string, row: Record<string, unknown>) => rows[tab].push(row));
+    ctx.appendObject_.mockImplementationOnce(() => { throw new Error("Sheets temporarily unavailable"); });
+    const payload = { ...input, fileIds: ["attachment"] };
+    expect(() => ctx.submitStagedPublicCase_({}, payload)).toThrow("Sheets temporarily unavailable");
+    expect(files[0]).toMatchObject({ folder: "CV-test", name: "1-example.pdf" });
+
+    expect(ctx.submitStagedPublicCase_({}, payload)).toEqual({ publicId: "CV-test" });
+    expect(ctx.submitStagedPublicCase_({}, payload)).toEqual({ publicId: "CV-test" });
+    expect(rows.Cases).toHaveLength(1);
+    expect(rows.Messages).toHaveLength(1);
+    expect(rows.Attachments).toHaveLength(1);
+    expect(rows.Attachments[0].file_name).toBe("1-example.pdf");
+    expect(ctx.sendPublicCaseConfirmation_).toHaveBeenCalledTimes(1);
   });
 });
